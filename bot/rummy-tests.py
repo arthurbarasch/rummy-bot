@@ -1,7 +1,8 @@
 import unittest
 from builtins import int
+import numpy as np
 
-from bot import RummyModel,RummySolver, RummyController, RummyView, runRummyGame
+from bot import RummyModel,RummySolver, RummyController, RummyView, runRummyGame, k, m
 
 
 class RummyTestCase(unittest.TestCase):
@@ -24,9 +25,15 @@ class RummyTestCase(unittest.TestCase):
         self.assertTrue(test)
 
     # Solver Tests
-    # def test_make_runs(self):
-    #     solver = RummySolver(self.model)
-    #
+    def test_make_runs(self):
+        self.model.restart()
+        self.model.addRun(['A1','A2', 'A3'])
+        self.model.getCurrentPlayer().append('A4')
+        solver = RummySolver(self.model)
+        runs, tiles, scores = solver.makeRuns(np.zeros(shape=(k,m)),self.model.getTotalTilePool(),4)
+        self.assertEqual(scores, 10)
+
+
 
 
 if __name__ == '__main__':

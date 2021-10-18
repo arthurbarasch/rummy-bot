@@ -50,7 +50,6 @@ class RummySolver:
         currTiles = list(filter(lambda tile: tile != 'joker' and int(tile[1:]) == value , hand)) # Filter out only tiles with current value
         newRuns = []
         tilesUsed = []
-        runs = runs[:]
         runScores = 0
         for K in range(k):
             for M in range(m):
@@ -70,8 +69,9 @@ class RummySolver:
                     newRuns.append(newRun)
                     tilesUsed.append(searchTile)
                 else:
-                    runs[K,M] = 0
-                    newRuns.append(runs[:])
+                    newRun = runs[:]
+                    newRun[K,M] = 0
+                    newRuns.append(newRun)
         hand = list(filter(lambda tile: tile == 'joker' or int(tile[1:]) != value , hand))
         return newRuns, tilesUsed, runScores
 

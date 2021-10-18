@@ -31,6 +31,9 @@ class RummyModel:
 
         self.drawPile.extend(['joker'] * j)
 
+    def restart(self):
+        self.__init__()
+
     def start(self):
         assert NUM_PLAYERS > 0
         assert n == len(N)
@@ -38,7 +41,7 @@ class RummyModel:
 
         # Distribute 14 random tiles to each player
         for i in range(NUM_PLAYERS):
-            self.drawTile(i, 14)
+            self.drawTile(i, 3)
 
     # Params:
     # playerIndex - Player who is drawing the tile
