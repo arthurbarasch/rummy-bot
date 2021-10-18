@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rummy Bot</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
+    <script src="https://unpkg.com/p5.js-svg@1.1.1"></script>
+    <link href="./static/styles.css" type="text/css" rel="stylesheet"></link>
+</head>
+<body>
+    <div class="container">
+        <div class="video-container">
+            <h3 class="mt-5 text-white">RummyBot</h3>
+            <img src="{{ url_for('video_feed') }}">
+            <form id="controls-form" method="post">
+                Canny Edge detection: <input type="range" min="30" max="250" value="100"  name="canny" id="canny"><br>
+                <input type="submit" value="Save!" name="save" id="save">
+            </form>
+        </div>
+    </div>
+
+<!--# https://www.geeksforgeeks.org/flask-form-submission-without-page-reload/-->
+<!--# VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-->
+     <script src="https://code.jquery.com/jquery-3.5.1.js"
+              integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+              crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+    $(document).on('submit','#controls-form',function(e)
+                   {
+      console.log('Form submit');
+      e.preventDefault();
+      $.ajax({
+        type:'POST',
+        url:'/',
+        data:{
+          canny:$("#canny").val()
+        },
+        success:function()
+        {
+        }
+      })
+    });
+    </script>
+<!--#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-->
+    <script language="JavaScript" type="text/javascript" src="static/sketch.js">
+
+    </script>
+
+</body>
+</html>
