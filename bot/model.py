@@ -10,26 +10,33 @@ n = 13 # Number of different numbered values of tiles
 k = 4  # Number of different suits
 
 # Sets
-K = [chr(i) for i in range(65, 65+k)]  # Set of suits
+K = list(range(1, k+1))  # Set of suits
 N = list(range(1, n+1))  # Set of numbered values
 
 
 
 class RummyModel:
-    def __init__(self):
-        self.board = {'runs': [], 'groups': []}
-        self.players = [[] for i in range(NUM_PLAYERS)]
-        self.drawPile = []
-        self.playerTurn = 0
-        for suit in K:
-            for val in N:
-                self.drawPile += [suit + str(val)]
+    def __init__(self,model=None):
+        assert model is None or model.isinstance(RummyModel)
+        self.board = {'runs': [], 'groups': []} if not model else model.board
+        self.players = [[] for i in range(NUM_PLAYERS)] if not model else model.players
+        self.playerTurn = 0 if not model else model.playerTurn
+        if not model:
+            self.drawPile = []
+            for suit in K:
+                for val in N:
+                    self.drawPile += [(suit,val)]
 
-        temp = self.drawPile[:]
-        for i in range(m - 1):
-            self.drawPile.extend(temp)
+            # Copy the full tile set 'm' times
+            temp = self.drawPile[:]
+            for i in range(m - 1):
+                self.drawPile.extend(temp)
 
-        self.drawPile.extend(['joker'] * j)
+            self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
+            print(self.drawPile)
+        else:
+            self.drawPile = model.drawPile
+
 
     def restart(self):
         self.__init__()
@@ -41,7 +48,7 @@ class RummyModel:
 
         # Distribute 14 random tiles to each player
         for i in range(NUM_PLAYERS):
-            self.drawTile(i, 3)
+            self.drawTile(i, 13)
 
     # Params:
     # playerIndex - Player who is drawing the tile
@@ -66,8 +73,7 @@ class RummyModel:
             temp.extend(run)
         for group in self.board.get('groups'):
             temp.extend(group)
-        temp.sort()
-        return temp
+        return sorted(temp,key=lambda tile: tile[1])
 
     def isGameOver(self):
         for p in self.players:
@@ -79,7 +85,7 @@ class RummyModel:
         assert len(group) >= 3
         temp = [tile[0] for tile in group]
         assert len(temp) == len(set(temp)) # Ensure all tiles in group have unique colors
-        temp = [tile[1:] for tile in group]
+        temp = [tile[1] for tile in group]
         assert len(set(temp)) == 1 # Ensure all tiles in group have same numbered value
         self.board['groups'].append(group)
         return True
@@ -93,12 +99,12 @@ class RummyModel:
             if suit != tile[0]:
                 return False
             if value == 0:
-                value = int(tile[1:])
+                value = tile[1]
                 continue
-            if value != int(tile[1:]) - 1:
+            if value != tile[1] - 1:
                 print('ERROR: cannot add run because of tile '+tile)
                 return False
-            value = int(tile[1:])
+            value = tile[1]
 
         self.board["runs"].append(run)
         return True
@@ -109,9 +115,6 @@ class RummyModel:
             'players':self.players,
             'playerTurn':self.playerTurn
         })
-
-
-
 
     def __str__(self):
         str = 'Board: {}\nDraw pile: {}\nPlayers:{}'

@@ -2,7 +2,7 @@ import unittest
 from builtins import int
 import numpy as np
 
-from bot import RummyModel,RummySolver, RummyController, RummyView, runRummyGame, k, m
+from bot import RummyModel,RummySolver, RummyController, RummyView, runRummyGame, k,K,m,n,N,NUM_PLAYERS
 
 
 class RummyTestCase(unittest.TestCase):
@@ -24,14 +24,24 @@ class RummyTestCase(unittest.TestCase):
         test = len(before)==1 and before[0] in self.model.players[0]
         self.assertTrue(test)
 
+    def test_start(self):
+        self.model.start()
+        self.assertEqual(n, len(N))
+        for i in self.model.players:
+            self.assertEqual(n,len(self.model.players[i]))
+
+    def test_rummy_params(self):
+        self.assertEqual(n, 13)
+        self.assertEqual(k, 4)
+        self.assertEqual(m, 2)
+
     # Solver Tests
     def test_make_runs(self):
         self.model.restart()
-        self.model.addRun(['A1','A2', 'A3'])
-        self.model.getCurrentPlayer().append('A4')
+        self.model.addRun([(1,1),(1,2), (1,3)])
+        self.model.getCurrentPlayer().append((1,4))
         solver = RummySolver(self.model)
-        runs, tiles, scores = solver.makeRuns(np.zeros(shape=(k,m)),self.model.getTotalTilePool(),4)
-        self.assertEqual(scores, 10)
+        self.assertEqual(10, solver.maxScore())
 
 
 

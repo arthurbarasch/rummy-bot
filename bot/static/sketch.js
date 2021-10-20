@@ -11,6 +11,9 @@ var PLAYER_ROWS = 2;
 var sizeX=0;
 var sizeY=0;
 
+//Game
+var suits = ['black','blue', '#f5b800', 'red']; //Colors for each of the suits
+
 var svgs = [];
 var test;
 
@@ -22,7 +25,7 @@ function setup() {
 
   endMoveButton = createButton('END MOVE');
   endMoveButton.mousePressed(endPlayerMove);
-  endMoveButton.addClass("disabled");
+//  endMoveButton.addClass("disabled");
 
   board = new Array();
   selectedTile = createVector(-1,-1);
@@ -59,6 +62,8 @@ function updateGameState(){
 
 function setGameState(state){
     board = [];
+    if(!state.board.runs) return
+
     for(let run of state.board.runs){
         board.push(...run)
         board.push('')
@@ -126,23 +131,15 @@ function drawTile(tile,pos){
     }
     translate(pos.x*sizeX, pos.y*sizeY);
     rect(0,0, sizeX, sizeY, 10);
-    switch(tile[0]){
-        case 'A':
-            fill('black');
-            break;
-        case 'B':
-            fill('#e3dc12');
-            break;
-        case 'C':
-            fill('red');
-            break;
-        case 'D':
-            fill('blue');
-            break;
+    print(board)
+    if(tile[0]+tile[1]>0){
+        fill(suits[tile[0]-1])
+        noStroke();
+        text(tile[1],0,0);
+    }else{
+        text('J',0,0);
     }
-  noStroke();
-  text(tile.substring(1),0,0)
-  pop();
+    pop();
 }
 
 function mousePressed(){
@@ -151,9 +148,12 @@ function mousePressed(){
 }
 
 function endPlayerMove(){
-    print("tf")
     boardModified = false;
     endMoveButton.addClass('disabled');
+
+    let url = '/end-move';
+    httpGet(url,'json',false,setGameState)
+    print("End move")
 }
 
 

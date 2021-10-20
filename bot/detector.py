@@ -98,7 +98,10 @@ def sendGameState():
     else:
         return {}
 
-
+@app.route('/end-move', methods=['POST','GET'])
+def endMove():
+    global model
+    return {}
 
 def startLocalServer():
     app.run(debug=True)
