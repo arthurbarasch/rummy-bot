@@ -9,7 +9,7 @@ class RummySolver:
         self.moves = []
 
     def setModel(self, model: RummyModel):
-        self.model = model
+        self.__init__(model)
 
     def getSolution(self):
         return self.moves
@@ -25,7 +25,7 @@ class RummySolver:
 
         hand = self.model.getTotalTilePool()
         new_runs, run_scores = self.makeRuns(hand, runs, value)
-        if(value > len(self.moves)):
+        if(value-1 >= len(self.moves)):
             self.moves.append((-1,-1))
         for i in range(len(new_runs)):
             #groupScores = self.totalGroupSize(hand) * value
@@ -42,12 +42,11 @@ class RummySolver:
         return self.score[value-1][runHash]
 
     def makeRuns(self,hand, runs, value):
-        currTiles = list(filter(lambda tile: tile[0] != 0  and tile[1] == value , hand)) # Filter out only tiles with current value
+        currTiles = list(filter(lambda tile: tile[1] == value , hand)) # Filter out only tiles with current value
         newRuns = []
         runScores = 0
         for suit in K:
             for M in range(m):
-                # Suits in alphabetic order, starting with capital "A" (ascii value 65)
                 searchTile = (suit, value)
                 if searchTile in currTiles:
                     runVal = runs[suit-1,M]
@@ -65,7 +64,7 @@ class RummySolver:
                     newRun = runs[:]
                     newRun[suit-1,M] = 0
                     newRuns.append(newRun)
-        hand = list(filter(lambda tile: tile == 'joker' or tile[1] != value , hand))
+        hand = list(filter(lambda tile: tile[1] != value , hand))
         return newRuns, runScores
 
     def totalGroupSize(self,hand):

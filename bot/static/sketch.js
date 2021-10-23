@@ -1,5 +1,5 @@
 var board = [];
-var players = [['B10','B11','B12'],['A4','D4','B4']];
+var players = [[],[]];
 var selectedPlayer = 0;
 var selectedTile;
 var boardModified = false;
@@ -13,26 +13,25 @@ var sizeY=0;
 
 //Game
 var suits = ['black','blue', '#f5b800', 'red']; //Colors for each of the suits
+var playerColors = ['#a3fc88','#80587a','#34707d','#e0a243'];
 
 var svgs = [];
 var test;
+var currMaxScore = 0;
 
 //Buttons
-var endMoveButton;
+var buttons = [];
 
 function setup() {
-  let cnv = createCanvas(windowWidth*0.5, 600);
-
-  endMoveButton = createButton('END MOVE');
-  endMoveButton.mousePressed(endPlayerMove);
-//  endMoveButton.addClass("disabled");
+  let cnv = createCanvas(windowWidth*0.55, 550);
+  cnv.parent('canvas-container')
+  createControlButtons();
 
   board = new Array();
   selectedTile = createVector(-1,-1);
   textAlign(CENTER);
   rectMode(CENTER);
   textSize(24);
-  cnv.addClass('canvas');
 }
 
 function draw() {
@@ -43,8 +42,11 @@ function draw() {
 
   // Player stand
   push();
-  fill('green')
+  fill(playerColors[selectedPlayer])
   rect(width/2,(ROWS+1)*sizeY,width,PLAYER_ROWS*sizeY)
+  fill(0)
+  text('Player '+selectedPlayer,width-50, height-PLAYER_ROWS*sizeY-10)
+  text('Max score:'+currMaxScore,80, height-PLAYER_ROWS*sizeY-10)
   pop();
 
   // Display tiles
@@ -53,8 +55,72 @@ function draw() {
   displayBoardTiles();
 }
 
+function createControlButtons(){
+  endMoveButton = createButton('END MOVE');
+  endMoveButton.mousePressed(endPlayerMove);
+  endMoveButton.addClass('disabled');
+  buttons.push(endMoveButton)
+
+  restartButton = createButton('Restart');
+  restartButton.mousePressed(restartBoard);
+  buttons.push(restartButton)
+
+  randomButton = createButton('Add random hand');
+  randomButton.mousePressed(addRandomHand);
+  buttons.push(randomButton)
+
+  drawTileButton = createButton('Draw tile');
+  drawTileButton.mousePressed(drawRandomTile);
+  buttons.push(drawTileButton)
+
+  solveButton = createButton('SOLVE');
+  solveButton.mousePressed(solveTable);
+  buttons.push(solveButton)
+
+  for(let b of buttons){
+    b.parent('controls');
+    b.addClass('btn m-1')
+  }
+}
+
+function solveTable(){
+    let url = '/solve';
+    httpGet(url,'json',false,function(data){
+        boardModified = false;
+        endMoveButton.addClass('disabled');
+        currMaxScore = data.score
+    });
+}
+
+function drawRandomTile(){
+    let url = '/draw-tile';
+    httpGet(url,'json',false,function(){
+        print("Draw new tile");
+        boardModified = false;
+        endMoveButton.addClass('disabled');
+    })
+}
+
+function addRandomHand(){
+    let url = '/add-hand';
+    httpGet(url,'json',false,function(){
+        print("Add random hand");
+        boardModified = false;
+        endMoveButton.addClass('disabled');
+    })
+}
+
+function restartBoard(){
+    let url = '/restart';
+    httpGet(url,'json',false,function(){
+        print("Board restart");
+        boardModified = false;
+        endMoveButton.addClass('disabled');
+    })
+}
+
 function updateGameState(){
-    if(frameCount%60==10 && !boardModified){
+    if(frameCount%20==1 && !boardModified){
         let url = '/game-state';
         httpGet(url,'json',false,setGameState)
     }
@@ -73,7 +139,8 @@ function setGameState(state){
         board.push(...group)
         board.push('')
     }
-    players = state.players
+    selectedPlayer = state.playerTurn;
+    players = state.players;
 }
 
 function displayPlayerTiles(){
@@ -131,7 +198,6 @@ function drawTile(tile,pos){
     }
     translate(pos.x*sizeX, pos.y*sizeY);
     rect(0,0, sizeX, sizeY, 10);
-    print(board)
     if(tile[0]+tile[1]>0){
         fill(suits[tile[0]-1])
         noStroke();
@@ -143,17 +209,18 @@ function drawTile(tile,pos){
 }
 
 function mousePressed(){
-  endMoveButton.removeClass('disabled');
-  selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY)) ;
+    selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY)) ;
+    boardModified = true;
 }
 
 function endPlayerMove(){
     boardModified = false;
     endMoveButton.addClass('disabled');
-
+    postData = JSON.stringify({board, players})
     let url = '/end-move';
-    httpGet(url,'json',false,setGameState)
-    print("End move")
+    httpPost(url,'json',false,function(data){
+
+    })
 }
 
 
@@ -164,15 +231,17 @@ function mouseReleased(){
   }else{
     let index = newTileLocation.y*COLS+newTileLocation.x;
     let tileValue;
-    if(selectedTile.y>=ROWS){//Moved from player tileset
+    if(selectedTile.y>=ROWS){ //Moved from player tileset
       tileValue = players[selectedPlayer][selectedTile.y-ROWS+selectedTile.x]
       players[selectedPlayer].splice(selectedTile.y-ROWS+selectedTile.x,1) //Remove from player's tileset
     }else{
       tileValue = board[selectedTile.y*COLS+selectedTile.x]
       board.splice(selectedTile.y*COLS+selectedTile.x,1) //Remove from board tileset
     }
-    boardModified = true;
+
+    endMoveButton.removeClass('disabled');
     board.splice(index,0,tileValue); //Add to board tileset
+
   }
   selectedTile = createVector(-1,-1);
 }

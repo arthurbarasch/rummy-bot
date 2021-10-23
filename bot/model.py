@@ -33,10 +33,11 @@ class RummyModel:
                 self.drawPile.extend(temp)
 
             self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
-            print(self.drawPile)
         else:
             self.drawPile = model.drawPile
 
+    def giveAllTilesToCurrentPlayer(self):
+        self.drawTile(self.playerTurn, k*n*m)
 
     def restart(self):
         self.__init__()
@@ -48,16 +49,17 @@ class RummyModel:
 
         # Distribute 14 random tiles to each player
         for i in range(NUM_PLAYERS):
-            self.drawTile(i, 13)
+            self.drawTile(i, 14)
 
     # Params:
     # playerIndex - Player who is drawing the tile
     # n - number of tiles to draw
     def drawTile(self, playerIndex, n=1):
         for i in range(n):
-            r = random.randrange(1, len(self.drawPile))
-            tile = self.drawPile.pop(r)
-            self.players[playerIndex].append(tile)
+            if len(self.drawPile)>0:
+                r = random.randrange(0, len(self.drawPile))
+                tile = self.drawPile.pop(r)
+                self.players[playerIndex].append(tile)
 
     def nextPlayer(self):
         self.playerTurn = (self.playerTurn + 1) % NUM_PLAYERS
@@ -81,12 +83,31 @@ class RummyModel:
                 return True
         return False
 
+    def addRandomHand(self):
+        hand = ''
+        while hand == '' or not (self.addRun(hand) or self.addGroup(hand)):
+            if random.random()>0.5:
+                tile = random.choice(self.drawPile)
+                length = random.randrange(3, 6)
+                hand = [(tile[0], val) for val in range(tile[1], tile[1]+length)]
+            else:
+                tile = random.choice(self.drawPile)
+                hand = [(suit, tile[1]) for suit in K]
+
+
     def addGroup(self, group):
-        assert len(group) >= 3
+        if len(group) < 3:
+            return False
         temp = [tile[0] for tile in group]
-        assert len(temp) == len(set(temp)) # Ensure all tiles in group have unique colors
+        if len(temp) != len(set(temp)): # Ensure all tiles in group have unique colors
+            return False
         temp = [tile[1] for tile in group]
-        assert len(set(temp)) == 1 # Ensure all tiles in group have same numbered value
+        if len(set(temp)) != 1: # Ensure all tiles in group have same numbered value
+            return False
+        for g in group:
+            if g not in self.drawPile:
+                return False
+
         self.board['groups'].append(group)
         return True
 
@@ -96,6 +117,8 @@ class RummyModel:
         suit = run[0][0]
         value = 0
         for tile in run:
+            if tile not in self.drawPile:
+                return False
             if suit != tile[0]:
                 return False
             if value == 0:

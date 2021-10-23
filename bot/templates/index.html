@@ -5,24 +5,35 @@
     <title>Rummy Bot</title>
     <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
     <script src="https://unpkg.com/p5.js-svg@1.1.1"></script>
-    <link href="./static/styles.css" type="text/css" rel="stylesheet"></link>
+<!--    <link href="./static/styles.css" type="text/css" rel="stylesheet"/>-->
 </head>
-<body>
-    <div class="container">
-        <div class="video-container">
-            <h3 class="mt-5 text-white">RummyBot</h3>
-            <img src="{{ url_for('video_feed') }}">
-            <form id="controls-form" method="post">
-                Canny Edge detection: <input type="range" min="30" max="250" value="100"  name="canny" id="canny"><br>
-                <input type="submit" value="Save!" name="save" id="save">
-            </form>
+<body class="bg-dark text-white">
+    <div class="container-fluid mt-0">
+        <div class="row">
+            <div class="col-md-5 col-12 p-2">
+                <h3 class="mt-4 text-white">RummyBot</h3>
+                <img src="{{ url_for('video_feed') }}">
+                <form class="form-group" id="controls-form" method="post">
+                    Canny Edge detection: <input type="range" min="30" max="250" value="100"  name="canny" id="canny">
+                    <input class="btn" type="submit" value="Save!" name="save" id="save">
+                </form>
+            </div>
+            <div class="col-md-7 col-12 p-3" id="canvas-container">
+
+            </div>
         </div>
     </div>
 
+    <div class="d-inline-flex float-right bg-info rounded p-3">
+        <h4>Controls</h4>
+        <div id="controls" class="p-2">
+
+        </div>
+    </div>
 <!--# https://www.geeksforgeeks.org/flask-form-submission-without-page-reload/-->
 <!--# VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-->
      <script src="https://code.jquery.com/jquery-3.5.1.js"
@@ -48,7 +59,6 @@
     </script>
 <!--#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-->
     <script language="JavaScript" type="text/javascript" src="static/sketch.js">
-
     </script>
 
 </body>

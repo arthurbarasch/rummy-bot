@@ -27,8 +27,8 @@ class RummyTestCase(unittest.TestCase):
     def test_start(self):
         self.model.start()
         self.assertEqual(n, len(N))
-        for i in self.model.players:
-            self.assertEqual(n,len(self.model.players[i]))
+        for player in self.model.players:
+            self.assertEqual(14,len(player))
 
     def test_rummy_params(self):
         self.assertEqual(n, 13)
@@ -42,6 +42,20 @@ class RummyTestCase(unittest.TestCase):
         self.model.getCurrentPlayer().append((1,4))
         solver = RummySolver(self.model)
         self.assertEqual(10, solver.maxScore())
+
+        self.model.restart()
+        self.model.addRun([(2,4),(2,5), (2,6)])
+        self.model.getCurrentPlayer().append((3,7))
+        print(self.model)
+        solver.setModel(self.model)
+        self.assertEqual(15, solver.maxScore())
+
+    def test_make_runs_all_tiles(self):
+        self.model.restart()
+        self.model.giveAllTilesToCurrentPlayer()
+        print(self.model)
+        solver = RummySolver(self.model)
+        self.assertEqual(728, solver.maxScore())
 
 
 

@@ -2,6 +2,7 @@
 
 #Import necessary libraries
 from flask import Flask, render_template, Response, request
+from threading import Timer
 import cv2
 import random
 import numpy as np
@@ -10,6 +11,7 @@ import matplotlib.cm as cm
 from scipy.io import loadmat
 import pytesseract as tess
 from bot.controller import runRummyGame
+from bot.solver import RummySolver
 
 #Initialize the Flask app
 app = Flask(__name__)
@@ -102,6 +104,31 @@ def sendGameState():
 def endMove():
     global model
     return {}
+
+@app.route('/restart', methods=['POST','GET'])
+def restart():
+    global model
+    model.restart()
+    model.start()
+    return {}
+
+@app.route('/add-hand', methods=['POST','GET'])
+def addRandomHand():
+    global model
+    model.addRandomHand()
+    return {}
+
+@app.route('/draw-tile', methods=['POST','GET'])
+def drawTile():
+    global model
+    model.drawTile(model.playerTurn)
+    Timer(2.5,model.nextPlayer).start()
+    return {}
+
+@app.route('/solve', methods=['POST','GET'])
+def solve():
+    global model
+    return {'score':RummySolver(model).maxScore() }
 
 def startLocalServer():
     app.run(debug=True)

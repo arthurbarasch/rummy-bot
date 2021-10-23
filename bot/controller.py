@@ -37,13 +37,11 @@ def runRummyGame(solve=True):
     model = RummyModel()
     view = RummyView()
     controller = RummyController(model, view)
-    model.start()
 
     if solve:
         # Insert example game states here
-        model.addRun([(1,10), (1,11), (1,12), (1,13)])
-        model.addRun([(4,11),(4,12),(4,13),(4,14)])
-
+        model.addRun([(1,10),(1,11),(1,12),(1,13)])
+        model.start()
         print('Computing max score for current game state:')
         print(model.getTotalTilePool())
         start = time.time()
@@ -53,4 +51,5 @@ def runRummyGame(solve=True):
         print('Maximum score for this state: {}'.format(score))
         print('Solution: (length {})'.format(len(solver.getSolution())))
         print(str(solver.getSolution()))
+
     return model
