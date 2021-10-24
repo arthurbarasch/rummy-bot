@@ -68,14 +68,20 @@ class RummyModel:
         if(self.playerTurn>=0 and self.playerTurn<len(self.players)):
             return self.players[self.playerTurn]
 
-    #Return the tile pool which is defined to be the board + current player tiles
-    def getTotalTilePool(self):
+    # Return the tile pool which is defined to be the board + current player tiles
+    # Params:
+    # filter_value - if specified, return the tile pool filtered out on the given 'filter_value',
+    #     so only return available tiles of that value, of any suit (useful for MaxScore)
+    def getTotalTilePool(self, filter_value=None):
         temp = self.getCurrentPlayer()[:]
         for run in self.board.get('runs'):
             temp.extend(run)
         for group in self.board.get('groups'):
             temp.extend(group)
-        return sorted(temp,key=lambda tile: tile[1])
+        if n:
+            return sorted(list(filter(lambda tile: tile[1] == filter_value, temp)),key=lambda tile: tile[1])
+        else:
+            return sorted(temp,key=lambda tile: tile[1])
 
     def isGameOver(self):
         for p in self.players:

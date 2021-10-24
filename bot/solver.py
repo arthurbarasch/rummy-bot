@@ -20,16 +20,15 @@ class RummySolver:
             return 0
         runHash = self.getRunHash(runs)
         if runHash in self.score[value-1]:
-
             return self.score[value-1][runHash]
 
-        hand = self.model.getTotalTilePool()
-        new_runs, run_scores = self.makeRuns(hand, runs, value)
+        hand = self.model.getTotalTilePool(filter_value=value)
+        new_runs,new_hands, run_scores = self.makeRuns(hand, runs, value)
         if(value-1 >= len(self.moves)):
             self.moves.append((-1,-1))
         for i in range(len(new_runs)):
-            #groupScores = self.totalGroupSize(hand) * value
-            result = 0 + run_scores + self.maxScore(value + 1, new_runs[i])
+            groupScores = self.totalGroupSize(new_hands[i]) * value
+            result = groupScores + run_scores + self.maxScore(value + 1, new_runs[i])
             if runHash in self.score[value-1]:
                 temp = self.score[value-1][runHash]
                 self.score[value-1][runHash] = max(result, temp)
@@ -42,8 +41,9 @@ class RummySolver:
         return self.score[value-1][runHash]
 
     def makeRuns(self,hand, runs, value):
-        currTiles = list(filter(lambda tile: tile[1] == value , hand)) # Filter out only tiles with current value
+        currTiles = hand[:]
         newRuns = []
+        newHands = []
         runScores = 0
         for suit in K:
             for M in range(m):
@@ -60,15 +60,21 @@ class RummySolver:
                         runScores += value
                     currTiles.remove(searchTile)
                     newRuns.append(newRun)
+                    newHand = hand[:]
+                    newHand.remove(searchTile)
+                    newHands.append(newHand)
                 else:
                     newRun = runs[:]
                     newRun[suit-1,M] = 0
                     newRuns.append(newRun)
+                    newHands.append(hand[:])
         hand = list(filter(lambda tile: tile[1] != value , hand))
-        return newRuns, runScores
+        return newRuns,newHands, runScores
 
+    # Return the
     def totalGroupSize(self,hand):
-        return 0
+        val = len(set(hand))
+        return val if val >= 3 else 0
 
     @staticmethod
     def getRunHash(run):

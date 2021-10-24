@@ -58,6 +58,12 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(728, solver.maxScore())
 
 
+    def test_make_groups(self):
+        self.model.restart()
+        self.model.addGroup([(1,10),(2,10), (3,10)])
+        self.model.getCurrentPlayer().append((4,10))
+        solver = RummySolver(self.model)
+        self.assertEqual(40, solver.maxScore())
 
 
 if __name__ == '__main__':
