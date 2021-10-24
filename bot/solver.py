@@ -28,10 +28,9 @@ class RummySolver:
             self.moves.append((-1,-1))
         for i in range(len(new_runs)):
             groupScores = self.totalGroupSize(new_hands[i]) * value
-            result = groupScores + run_scores + self.maxScore(value + 1, new_runs[i])
+            result = groupScores + run_scores[i] + self.maxScore(value + 1, new_runs[i])
             if runHash in self.score[value-1]:
-                temp = self.score[value-1][runHash]
-                self.score[value-1][runHash] = max(result, temp)
+                self.score[value-1][runHash] = max(result, self.score[value-1][runHash])
             else:
                 self.score[value-1][runHash] = result
 
@@ -42,9 +41,7 @@ class RummySolver:
 
     def makeRuns(self,hand, runs, value):
         currTiles = hand[:]
-        newRuns = []
-        newHands = []
-        runScores = 0
+        ret = {'new_runs': [], 'new_hands': [], 'run_scores': []}
         for suit in K:
             for M in range(m):
                 searchTile = (suit, value)
@@ -53,25 +50,27 @@ class RummySolver:
                     newRun = runs[:]
                     if runVal < 2:  # If current length of run 0 or 1, increase length by one
                         newRun[suit-1, M]+=1
+                        ret['run_scores'].append(0)
                     elif runVal == 2: # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
                         newRun[suit-1, M]+=1
-                        runScores += (value-2)+(value-1)+value
+                        ret['run_scores'].append((value-2)+(value-1)+value)
                     elif runVal >=3: # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
-                        runScores += value
+                        ret['run_scores'].append(value)
                     currTiles.remove(searchTile)
-                    newRuns.append(newRun)
+                    ret['new_runs'].append(newRun)
                     newHand = hand[:]
                     newHand.remove(searchTile)
-                    newHands.append(newHand)
+                    ret['new_hands'].append(newHand)
                 else:
                     newRun = runs[:]
                     newRun[suit-1,M] = 0
-                    newRuns.append(newRun)
-                    newHands.append(hand[:])
+                    ret['new_runs'].append(newRun)
+                    ret['new_hands'].append(hand[:])
+                    ret['run_scores'].append(0)
         hand = list(filter(lambda tile: tile[1] != value , hand))
-        return newRuns,newHands, runScores
+        return ret['new_runs'], ret['new_hands'], ret['run_scores']
 
-    # Return the
+    # Return the total group size that can be formed from the given 'hand'
     def totalGroupSize(self,hand):
         val = len(set(hand))
         return val if val >= 3 else 0

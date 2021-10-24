@@ -6,7 +6,6 @@ from bot import RummyModel,RummySolver, RummyController, RummyView, runRummyGame
 
 
 class RummyTestCase(unittest.TestCase):
-
     def setUp(self) -> None:
         super().setUp()
         self.model = runRummyGame(solve=False)
@@ -23,6 +22,15 @@ class RummyTestCase(unittest.TestCase):
             before.remove(item)
         test = len(before)==1 and before[0] in self.model.players[0]
         self.assertTrue(test)
+
+    def test_total_tile_pool(self):
+        self.model.restart()
+        self.model.addGroup([(1,10),(2,10), (3,10)])
+        self.model.getCurrentPlayer().append((1,5))
+        temp = self.model.getTotalTilePool(filter_value=10)
+        self.assertEquals([(1,10),(2,10), (3,10)], temp)
+        temp = self.model.getTotalTilePool()
+        self.assertEquals([(1,5),(1,10),(2,10), (3,10)],temp)
 
     def test_start(self):
         self.model.start()
@@ -57,13 +65,21 @@ class RummyTestCase(unittest.TestCase):
         solver = RummySolver(self.model)
         self.assertEqual(728, solver.maxScore())
 
-
     def test_make_groups(self):
         self.model.restart()
         self.model.addGroup([(1,10),(2,10), (3,10)])
         self.model.getCurrentPlayer().append((4,10))
         solver = RummySolver(self.model)
         self.assertEqual(40, solver.maxScore())
+
+    def test_make_groups_and_runs(self):
+        self.model.restart()
+        #self.model.addGroup([(1,10),(2,10), (3,10)])
+        self.model.addGroup([(2,3),(3,3), (4,3)])
+        self.model.addRun([(1,1),(1,2), (1,3)])
+        self.model.getCurrentPlayer().append((4,10))
+        solver = RummySolver(self.model)
+        self.assertEqual(15, solver.maxScore())
 
 
 if __name__ == '__main__':

@@ -78,7 +78,7 @@ class RummyModel:
             temp.extend(run)
         for group in self.board.get('groups'):
             temp.extend(group)
-        if n:
+        if filter_value is not None:
             return sorted(list(filter(lambda tile: tile[1] == filter_value, temp)),key=lambda tile: tile[1])
         else:
             return sorted(temp,key=lambda tile: tile[1])
