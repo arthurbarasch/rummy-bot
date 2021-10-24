@@ -6,13 +6,18 @@ class RummySolver:
     def __init__(self, model: RummyModel):
         self.model = model
         self.score = [dict()] * n
-        self.moves = []
+        self.moves = [(-1,-1)] * n
 
     def setModel(self, model: RummyModel):
         self.__init__(model)
 
+
     def getSolution(self):
-        return self.moves
+        temp = []
+        for move in self.moves:
+            if len(move[1])>0:
+                temp.append(move[1])
+        return temp
 
 
     def maxScore(self, value=1, runs=np.zeros(shape=(k, m))):
@@ -24,8 +29,6 @@ class RummySolver:
 
         hand = self.model.getTotalTilePool(filter_value=value)
         new_runs,new_hands, run_scores = self.makeRuns(hand, runs, value)
-        if(value-1 >= len(self.moves)):
-            self.moves.append((-1,-1))
         for i in range(len(new_runs)):
             groupScores = self.totalGroupSize(new_hands[i]) * value
             result = groupScores + run_scores[i] + self.maxScore(value + 1, new_runs[i])
@@ -35,8 +38,10 @@ class RummySolver:
                 self.score[value-1][runHash] = result
 
             # For storing the solution
-            if result > self.moves[value-1][0]:
-                self.moves[-1] = (result, self.getRunHash(new_runs[i]))
+            if result == self.moves[value - 1][0]:
+                self.moves[value-1][1].append(new_hands[i])
+            elif result > self.moves[value-1][0]:
+                self.moves[value-1] = (result, new_hands[i])
         return self.score[value-1][runHash]
 
     def makeRuns(self,hand, runs, value):

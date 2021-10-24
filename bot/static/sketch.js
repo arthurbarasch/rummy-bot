@@ -89,6 +89,7 @@ function solveTable(){
         boardModified = false;
         endMoveButton.addClass('disabled');
         currMaxScore = data.score
+        print(data.solution)
     });
 }
 
@@ -163,13 +164,14 @@ function displayBoardTiles(){
        drawTile(board[i],imagePointer);
     }else{
         let nextSpace=i;
-        while((board[nextSpace]!='' && nextSpace+1<board.length) || nextSpace != i){
+        while((board[nextSpace]!='' && nextSpace+1<board.length) || nextSpace == i){
             nextSpace++;
         }
         currentGroupLength = nextSpace-i;
         if(imagePointer.x+currentGroupLength>COLS){
             imagePointer.x = 0
             imagePointer.y++;
+            continue;
         }
     }
     imagePointer.x++;

@@ -128,7 +128,9 @@ def drawTile():
 @app.route('/solve', methods=['POST','GET'])
 def solve():
     global model
-    return {'score':RummySolver(model).maxScore() }
+    solver = RummySolver(model)
+    score = solver.maxScore()
+    return {'score':score, 'solution': str(solver.getSolution())}
 
 def startLocalServer():
     app.run(debug=True)

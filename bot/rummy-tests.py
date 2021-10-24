@@ -70,7 +70,10 @@ class RummyTestCase(unittest.TestCase):
         self.model.addGroup([(1,10),(2,10), (3,10)])
         self.model.getCurrentPlayer().append((4,10))
         solver = RummySolver(self.model)
-        self.assertEqual(40, solver.maxScore())
+
+        score = solver.maxScore()
+        print(solver.getSolution())
+        self.assertEqual(40, score)
 
     def test_make_groups_and_runs(self):
         self.model.restart()
