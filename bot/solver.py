@@ -5,7 +5,10 @@ import numpy as np
 class RummySolver:
     def __init__(self, model: RummyModel):
         self.model = model
-        self.score = [dict()] * n
+        self.score = []
+        for i in range(n):
+            self.score.append(dict())
+
         self.moves = [(-1,-1)] * n
 
     def setModel(self, model: RummyModel):
@@ -14,9 +17,10 @@ class RummySolver:
 
     def getSolution(self):
         temp = []
-        for move in self.moves:
+        for i, move in enumerate(self.moves):
+            print(move)
             if len(move[1])>0:
-                temp.append(move[1])
+                temp.append(self.score[i][move[1]])
         return temp
 
 
@@ -25,23 +29,25 @@ class RummySolver:
             return 0
         runHash = self.getRunHash(runs)
         if runHash in self.score[value-1]:
+            print('return memoized val:{}\tscore lengths:{}'.format(self.score[value-1][runHash], list(map(lambda x: len(x), self.score)) ))
             return self.score[value-1][runHash]
 
         hand = self.model.getTotalTilePool(filter_value=value)
         new_runs,new_hands, run_scores = self.makeRuns(hand, runs, value)
         for i in range(len(new_runs)):
+            debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
             groupScores = self.totalGroupSize(new_hands[i]) * value
             result = groupScores + run_scores[i] + self.maxScore(value + 1, new_runs[i])
+            debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores,result)
+            print(debugStr)
             if runHash in self.score[value-1]:
                 self.score[value-1][runHash] = max(result, self.score[value-1][runHash])
             else:
                 self.score[value-1][runHash] = result
 
             # For storing the solution
-            if result == self.moves[value - 1][0]:
-                self.moves[value-1][1].append(new_hands[i])
-            elif result > self.moves[value-1][0]:
-                self.moves[value-1] = (result, new_hands[i])
+            if result > self.moves[value-1][0]:
+                self.moves[value-1] = (result, runHash)
         return self.score[value-1][runHash]
 
     def makeRuns(self,hand, runs, value):
@@ -63,8 +69,7 @@ class RummySolver:
                         ret['run_scores'].append(value)
                     currTiles.remove(searchTile)
                     ret['new_runs'].append(newRun)
-                    newHand = hand[:]
-                    newHand.remove(searchTile)
+                    newHand = currTiles[:]
                     ret['new_hands'].append(newHand)
                 else:
                     newRun = runs[:]
@@ -77,8 +82,13 @@ class RummySolver:
 
     # Return the total group size that can be formed from the given 'hand'
     def totalGroupSize(self,hand):
-        val = len(set(hand))
-        return val if val >= 3 else 0
+        noDuplicates = set(hand)
+        for item in noDuplicates:
+            hand.remove(item)
+
+        l1 = len(noDuplicates)
+        l2 = len(hand)
+        return (l1 if l1>=3 else 0) + (l2 if l2>=3 else 0)
 
     @staticmethod
     def getRunHash(run):

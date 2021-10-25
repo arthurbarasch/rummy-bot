@@ -32,7 +32,7 @@ class RummyModel:
             for i in range(m - 1):
                 self.drawPile.extend(temp)
 
-            self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
+            #self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
         else:
             self.drawPile = model.drawPile
 
@@ -146,5 +146,5 @@ class RummyModel:
         })
 
     def __str__(self):
-        str = 'Board: {}\nDraw pile: {}\nPlayers:{}'
-        return str.format(self.board, self.drawPile, self.players)
+        str = 'Board: {}\nDraw pile({}): {}\nPlayers({},{}):{}'
+        return str.format(self.board, len(self.drawPile),self.drawPile, len(self.players[0]),len(self.players[1]), self.players)

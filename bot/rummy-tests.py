@@ -53,9 +53,8 @@ class RummyTestCase(unittest.TestCase):
 
         self.model.restart()
         self.model.addRun([(2,4),(2,5), (2,6)])
-        self.model.getCurrentPlayer().append((3,7))
-        print(self.model)
-        solver.setModel(self.model)
+        #self.model.getCurrentPlayer().append((3,7))
+        solver = RummySolver(self.model)
         self.assertEqual(15, solver.maxScore())
 
     def test_make_runs_all_tiles(self):
