@@ -22,13 +22,17 @@ camera = cv2.VideoCapture(0)
 
 #Rummy model
 model = None
+rummyBotSolutions = []
+currSolutionIndex = -1
 
 class RummyDetector:
     def __init__(self):
         self.cannyThreshold = 100
-        # Load Matlab data file to python dict structure
         self.initTesseract()
         self.frameNr = 0
+        self.roi = 0
+        self.img = 0
+
 
     # Set the tesseract executable file
     def initTesseract(self):
@@ -40,15 +44,20 @@ class RummyDetector:
     def genFrames(self):
         while True:
             self.frameNr += 1
-            success, frame = camera.read()  # read the camera frame
+            success, self.img = camera.read()  # read the camera frame
             if not success:
                 break
             else:
-                img = self.detectEdges(frame)
+                img = self.detectEdges(self.img)
                 #img = self.detectDigits(frame)
+
+                # Crop selected roi from raw image
+                if self.roi!=0:
+                    img = img[int(self.roi[1]):int(self.roi[1] + self.roi[3]), int(self.roi[0]):int(self.roi[0] + self.roi[2])]
                 frame = img.tobytes()
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
+
 
     def detectDigits(self, img):
         if(self.frameNr>=FRAME_INTERVAL):
@@ -64,15 +73,21 @@ class RummyDetector:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img_blur = cv2.GaussianBlur(gray, (3, 3), 0)
         canny = cv2.Canny(img_blur, self.cannyThreshold, self.cannyThreshold+40)  # apply canny to roi
+
         # Find contours
         contours, hierarchy = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # Draw contours
         drawing = np.zeros((canny.shape[0], canny.shape[1], 3), dtype=np.uint8)
         for i in range(len(contours)):
-            cv2.drawContours(drawing, contours, i, (240,100,60), 2, cv2.LINE_8, hierarchy, 0)
+            cv2.drawContours(drawing, contours, i, (240,100,60), 1, cv2.LINE_8, hierarchy, 0)
 
-        ret, img = cv2.imencode('.jpg', drawing)
-        return img
+        ret, newImg = cv2.imencode('.jpg', drawing)
+        return newImg
+
+    def selectROI(self):
+        self.roi = cv2.selectROI(self.img)
+
+
 
 
 
@@ -95,7 +110,12 @@ def video_feed():
 @app.route('/game-state', methods=['POST','GET'])
 def sendGameState():
     global model
+    global currSolutionIndex
+    global rummyBotSolutions
+
     if model:
+        if currSolutionIndex>=0 and currSolutionIndex<len(rummyBotSolutions):
+            return rummyBotSolutions[currSolutionIndex].encodeJSON()
         return model.encodeJSON()
     else:
         return {}
@@ -108,8 +128,10 @@ def endMove():
 @app.route('/restart', methods=['POST','GET'])
 def restart():
     global model
+    global currSolutionIndex
     model.restart()
     model.start()
+    currSolutionIndex = -1
     return {}
 
 @app.route('/add-hand', methods=['POST','GET'])
@@ -125,12 +147,32 @@ def drawTile():
     Timer(2.5,model.nextPlayer).start()
     return {}
 
+def nextSolution():
+    global  currSolutionIndex
+    global rummyBotSolutions
+    currSolutionIndex +=1
+    if currSolutionIndex>=len(rummyBotSolutions):
+        currSolutionIndex=-1
+    else:
+        print(len(rummyBotSolutions))
+        Timer(2, nextSolution).start()
+
 @app.route('/solve', methods=['POST','GET'])
 def solve():
-    global model
+    global model, rummyBotSolutions
     solver = RummySolver(model)
-    score = solver.maxScore()
-    return {'score':score, 'solution': str(solver.getSolution())}
+    score,solution,runHash = solver.maxScore()
+    rummyBotSolutions = solver.traceSolution(runHash)
+    #nextSolution()
+    return {'score':score, 'solution': str(solution)}
+
+@app.route('/select-roi', methods=['POST','GET'])
+def selectROI():
+    global model
+    rd.selectROI()
+    return {}
+
+
 
 def startLocalServer():
     app.run(debug=True)

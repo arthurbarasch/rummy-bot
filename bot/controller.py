@@ -40,16 +40,16 @@ def runRummyGame(solve=True):
 
     if solve:
         # Insert example game states here
-        model.addRun([(1,10),(1,11),(1,12),(1,13)])
         model.start()
         print('Computing max score for current game state:')
         print(model.getTotalTilePool())
         start = time.time()
         solver = RummySolver(model)
-        score = solver.maxScore()
+        score,solution,hash = solver.maxScore()
         print('Solution found in {} ms'.format((time.time()-start)*1000 ))
         print('Maximum score for this state: {}'.format(score))
-        print('Solution: (length {})'.format(len(solver.getSolution())))
-        print(str(solver.getSolution()))
+        print('Solution:')
+        print(str(solution))
+        print(solver.score)
 
     return model

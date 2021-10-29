@@ -12,12 +12,15 @@ var sizeX=0;
 var sizeY=0;
 
 //Game
+
+               //1 2 3 4
 var suits = ['black','blue', '#f5b800', 'red']; //Colors for each of the suits
 var playerColors = ['#a3fc88','#80587a','#34707d','#e0a243'];
 
 var svgs = [];
 var test;
 var currMaxScore = 0;
+var boardScore = 0;
 
 //Buttons
 var buttons = [];
@@ -46,7 +49,8 @@ function draw() {
   rect(width/2,(ROWS+1)*sizeY,width,PLAYER_ROWS*sizeY)
   fill(0)
   text('Player '+selectedPlayer,width-50, height-PLAYER_ROWS*sizeY-10)
-  text('Max score:'+currMaxScore,80, height-PLAYER_ROWS*sizeY-10)
+  text('Max score (RummyBot): '+currMaxScore,150, height-PLAYER_ROWS*sizeY-10)
+  text('Score on the board: '+boardScore,125, height-PLAYER_ROWS*sizeY-50)
   pop();
 
   // Display tiles
@@ -77,10 +81,20 @@ function createControlButtons(){
   solveButton.mousePressed(solveTable);
   buttons.push(solveButton)
 
+  roiButton = createButton('Select Region of Interest (ROI)');
+  roiButton.mousePressed(selectRoi);
+  buttons.push(roiButton)
+
   for(let b of buttons){
     b.parent('controls');
     b.addClass('btn m-1')
   }
+}
+
+function selectRoi(){
+    let url = '/select-roi';
+    httpGet(url,'json',false,function(data){
+    });
 }
 
 function solveTable(){
@@ -142,6 +156,8 @@ function setGameState(state){
     }
     selectedPlayer = state.playerTurn;
     players = state.players;
+    if(state.score)
+        boardScore = state.score;
 }
 
 function displayPlayerTiles(){
@@ -164,7 +180,7 @@ function displayBoardTiles(){
        drawTile(board[i],imagePointer);
     }else{
         let nextSpace=i;
-        while((board[nextSpace]!='' && nextSpace+1<board.length) || nextSpace == i){
+        while((board[nextSpace]!='' && nextSpace+1<=board.length) || nextSpace == i){
             nextSpace++;
         }
         currentGroupLength = nextSpace-i;

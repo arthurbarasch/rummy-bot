@@ -49,39 +49,42 @@ class RummyTestCase(unittest.TestCase):
         self.model.addRun([(1,1),(1,2), (1,3)])
         self.model.getCurrentPlayer().append((1,4))
         solver = RummySolver(self.model)
-        self.assertEqual(10, solver.maxScore())
+        self.assertEqual(10, solver._maxScore())
 
         self.model.restart()
         self.model.addRun([(2,4),(2,5), (2,6)])
         #self.model.getCurrentPlayer().append((3,7))
         solver = RummySolver(self.model)
-        self.assertEqual(15, solver.maxScore())
+        self.assertEqual(15, solver._maxScore())
 
     def test_make_runs_all_tiles(self):
         self.model.restart()
         self.model.giveAllTilesToCurrentPlayer()
-        print(self.model)
         solver = RummySolver(self.model)
-        self.assertEqual(728, solver.maxScore())
+        self.assertEqual(728, solver._maxScore())
 
     def test_make_groups(self):
         self.model.restart()
         self.model.addGroup([(1,10),(2,10), (3,10)])
         self.model.getCurrentPlayer().append((4,10))
         solver = RummySolver(self.model)
-
-        score = solver.maxScore()
-        print(solver.getSolution())
-        self.assertEqual(40, score)
+        self.assertEqual(40, solver._maxScore())
 
     def test_make_groups_and_runs(self):
         self.model.restart()
-        #self.model.addGroup([(1,10),(2,10), (3,10)])
+        self.model.addGroup([(1,10),(2,10), (3,10)])
         self.model.addGroup([(2,3),(3,3), (4,3)])
         self.model.addRun([(1,1),(1,2), (1,3)])
         self.model.getCurrentPlayer().append((4,10))
         solver = RummySolver(self.model)
-        self.assertEqual(15, solver.maxScore())
+        self.assertEqual(55, solver._maxScore())
+
+    def test_add_random_hand(self):
+        self.model.restart()
+        score = self.model.addRandomHand()
+        solver = RummySolver(self.model)
+        self.assertEqual(score, solver._maxScore())
+
 
 
 if __name__ == '__main__':
