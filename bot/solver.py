@@ -23,8 +23,6 @@ class RummySolver:
                     continue
         return solutions
 
-
-
     def _maxScore(self):
         return self.maxScore()[0]
 
@@ -62,7 +60,9 @@ class RummySolver:
                 searchTile = (suit, value)
                 if searchTile in currTiles:
                     runVal = runs[suit-1,M]
-                    newRun = runs[:]
+                    newRun = np.array(runs)
+                    if value == 13  and runVal == 2:
+                        logging.warning('\n*runs* = {}\t\n\n'.format(newRun))
 
                     if runVal < 2:  # If current length of run 0 or 1, increase length by one
                         newRun[suit-1, M]+=1
@@ -74,7 +74,7 @@ class RummySolver:
                         assert newRun[suit-1, M] == 3
                         ret['run_scores'].append((value-2)+(value-1)+value)
                         newSolution = RummyModel(solution)
-                        newSolution.addRun([(suit, value),(suit, value),(suit, value)])
+                        newSolution.addRun([(suit, value-2),(suit, value-1),(suit, value)])
                         ret['solutions'].append(newSolution)
                     elif runVal >=3: # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
                         ret['run_scores'].append(value)
@@ -85,7 +85,7 @@ class RummySolver:
                     ret['new_runs'].append(newRun)
                     ret['new_hands'].append(hand[:])
                 else:
-                    newRun = runs[:]
+                    newRun = np.array(runs)
                     newRun[suit-1,M] = 0
                     ret['new_runs'].append(newRun)
                     ret['new_hands'].append(hand[:])

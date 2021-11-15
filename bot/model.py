@@ -5,7 +5,7 @@ import logging
 
 # Variables
 NUM_PLAYERS = 2
-m = 1  # Number of copies of the full tile set (without jokers)
+m = 2  # Number of copies of the full tile set (without jokers)
 j = 2  # Number of jokers
 n = 13 # Number of different numbered values of tiles
 k = 4  # Number of different suits
@@ -13,7 +13,6 @@ k = 4  # Number of different suits
 # Sets
 K = list(range(1, k+1))  # Set of suits
 N = list(range(1, n+1))  # Set of numbered values
-
 
 
 class RummyModel:
@@ -163,7 +162,7 @@ class RummyModel:
         for tile in tiles:
             runExists = False
             for run in self.board['runs']:
-                if(run[-1][1]-1 == tile[1] and run[-1][0] == tile[0]):
+                if run[-1][1]-1 == tile[1] and run[-1][0] == tile[0]:
                     run.append(tile)
                     runExists = True
                     break
