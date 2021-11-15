@@ -1,5 +1,6 @@
 from bot.model import m, n, k, RummyModel, K
 import math
+import logging
 import numpy as np
 
 class RummySolver:
@@ -32,19 +33,22 @@ class RummySolver:
             return 0, solution, ''
         runHash = self.getRunHash(runs)
         if runHash in self.score[value-1]:
-            print('return memoized val:{}\tscore lengths:{}'.format(self.score[value-1][runHash][0], list(map(lambda x: len(x), self.score)) ))
+            logging.warning('return memoized val:{}\tscore lengths:{}'.format(self.score[value-1][runHash][0], list(map(lambda x: len(x), self.score)) ))
             return self.score[value-1][runHash]
+
+        logging.warning('SOLUTION:\n'+ str(solution))
 
         hand = self.model.getTotalTilePool(filter_value=value)
         new_runs,new_hands, run_scores,solutions = self.makeRuns(hand, runs, value, solution)
+        assert sum([len(new_runs),len(new_hands),len(run_scores),len(solutions)])/4 == len(new_runs)
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
             groupScores = self.totalGroupSize(new_hands[i],solutions[i]) * value
             score, solutions[i], nextRunHash = self.maxScore(value + 1, new_runs[i], solutions[i])
-            print(str(solutions[i]))
             result = groupScores + run_scores[i] + score
+
             debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores,result)
-            print(debugStr)
+            logging.warning(debugStr)
             if runHash not in self.score[value-1] or result > self.score[value-1][runHash][0]:
                 self.score[value-1][runHash] = (result,solutions[i],nextRunHash)
 
@@ -59,34 +63,36 @@ class RummySolver:
                 if searchTile in currTiles:
                     runVal = runs[suit-1,M]
                     newRun = runs[:]
-                    if runVal==0:
-                        newSolution = RummyModel(solution)
-                        newSolution.initNewRun(searchTile)
-                        ret['solutions'].append(newSolution)
-                    else:
-                        newSolution = RummyModel(solution)
-                        newSolution.addToRuns([searchTile])
-                        ret['solutions'].append(newSolution)
 
                     if runVal < 2:  # If current length of run 0 or 1, increase length by one
                         newRun[suit-1, M]+=1
                         ret['run_scores'].append(0)
+                        newSolution = RummyModel(solution)
+                        ret['solutions'].append(newSolution)
                     elif runVal == 2: # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
                         newRun[suit-1, M]+=1
+                        assert newRun[suit-1, M] == 3
                         ret['run_scores'].append((value-2)+(value-1)+value)
+                        newSolution = RummyModel(solution)
+                        newSolution.addRun([(suit, value),(suit, value),(suit, value)])
+                        ret['solutions'].append(newSolution)
                     elif runVal >=3: # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
                         ret['run_scores'].append(value)
+                        newSolution = RummyModel(solution)
+                        newSolution.addToRuns([(suit, value)])
+                        ret['solutions'].append(newSolution)
                     currTiles.remove(searchTile)
                     ret['new_runs'].append(newRun)
-                    newHand = currTiles[:]
-                    ret['new_hands'].append(newHand)
+                    ret['new_hands'].append(hand[:])
                 else:
                     newRun = runs[:]
                     newRun[suit-1,M] = 0
                     ret['new_runs'].append(newRun)
                     ret['new_hands'].append(hand[:])
                     ret['run_scores'].append(0)
-                    ret['solutions'].append(RummyModel(solution))
+                    newSolution = RummyModel(solution)
+                    newSolution.validateBoard(filter_suit=suit)
+                    ret['solutions'].append(newSolution)
         hand = list(filter(lambda tile: tile[1] != value , hand))
         return ret['new_runs'], ret['new_hands'], ret['run_scores'], ret['solutions']
 
@@ -100,7 +106,7 @@ class RummySolver:
         l2 = len(hand)
         if l1 >= 3:
             solutions.addGroup(list(noDuplicates))
-        return (l1 if l1>=3 else 0) + (l2-l1 if l2>=3 else 0) #TODO Check this line
+        return (l1 if l1 >= 3 else 0) + (l2-l1 if l2 >= 3 else 0) #TODO Check this line
 
     @staticmethod
     def getRunHash(run):

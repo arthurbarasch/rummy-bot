@@ -162,9 +162,10 @@ def solve():
     global model, rummyBotSolutions
     solver = RummySolver(model)
     score,solution,runHash = solver.maxScore()
-    rummyBotSolutions = solver.traceSolution(runHash)
+    #rummyBotSolutions = solver.traceSolution(runHash)
     #nextSolution()
-    return {'score':score, 'solution': str(solution)}
+    print(solution.encodeJSON())
+    return {'score':score, 'solution': solution.encodeJSON()}
 
 @app.route('/select-roi', methods=['POST','GET'])
 def selectROI():

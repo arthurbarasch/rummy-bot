@@ -1,8 +1,4 @@
-var board = [];
-var players = [[],[]];
-var selectedPlayer = 0;
-var selectedTile;
-var boardModified = false;
+
 
 //Board dimensions
 var ROWS = 6;
@@ -12,15 +8,20 @@ var sizeX=0;
 var sizeY=0;
 
 //Game
-
                //1 2 3 4
 var suits = ['black','blue', '#f5b800', 'red']; //Colors for each of the suits
 var playerColors = ['#a3fc88','#80587a','#34707d','#e0a243'];
-
-var svgs = [];
 var test;
 var currMaxScore = 0;
 var boardScore = 0;
+var solution;
+
+var board = [];
+var players = [[],[]];
+var selectedPlayer = 0;
+var selectedTile;
+var boardModified = false;
+
 
 //Buttons
 var buttons = [];
@@ -48,15 +49,40 @@ function draw() {
   fill(playerColors[selectedPlayer])
   rect(width/2,(ROWS+1)*sizeY,width,PLAYER_ROWS*sizeY)
   fill(0)
-  text('Player '+selectedPlayer,width-50, height-PLAYER_ROWS*sizeY-10)
+
+  text('Player '+(selectedPlayer+1),width-50, height-PLAYER_ROWS*sizeY-10)
   text('Max score (RummyBot): '+currMaxScore,150, height-PLAYER_ROWS*sizeY-10)
   text('Score on the board: '+boardScore,125, height-PLAYER_ROWS*sizeY-50)
   pop();
 
   // Display tiles
-  translate(sizeX/2, sizeY/2)
+  if(solution){
+    displaySolution()
+  }else{
+    displayBoardTiles();
+  }
   displayPlayerTiles();
-  displayBoardTiles();
+}
+
+function displaySolution(){
+    setGameState(solution)
+    push();
+    noStroke();
+    fill('red')
+    text("SOLUTION", width-90, height-PLAYER_ROWS*sizeY-75)
+    fill(255,0,0, 50)
+    rect(width/2,height/2,width,height)
+    pop();
+    displayBoardTiles();
+}
+
+function updateBoardScore(){
+    boardScore = 0
+    for(let tile of board){
+        if(tile != ''){
+            boardScore+=tile[1]
+        }
+    }
 }
 
 function createControlButtons(){
@@ -88,6 +114,9 @@ function createControlButtons(){
   for(let b of buttons){
     b.parent('controls');
     b.addClass('btn m-1')
+    b.mouseClicked(function(){
+        solution = null;
+    })
   }
 }
 
@@ -103,7 +132,8 @@ function solveTable(){
         boardModified = false;
         endMoveButton.addClass('disabled');
         currMaxScore = data.score
-        print(data.solution)
+        solution = JSON.parse(data.solution)
+        print(solution)
     });
 }
 
@@ -135,7 +165,7 @@ function restartBoard(){
 }
 
 function updateGameState(){
-    if(frameCount%20==1 && !boardModified){
+    if(frameCount%20==1 && !boardModified && !solution){
         let url = '/game-state';
         httpGet(url,'json',false,setGameState)
     }
@@ -143,8 +173,7 @@ function updateGameState(){
 
 function setGameState(state){
     board = [];
-    if(!state.board.runs) return
-
+    if(!state || !state.board) return
     for(let run of state.board.runs){
         board.push(...run)
         board.push('')
@@ -156,11 +185,12 @@ function setGameState(state){
     }
     selectedPlayer = state.playerTurn;
     players = state.players;
-    if(state.score)
-        boardScore = state.score;
+    updateBoardScore();
 }
 
 function displayPlayerTiles(){
+    push();
+    translate(sizeX/2, sizeY/2)
     let imagePointer = createVector(0,ROWS);
     for(let tile of players[selectedPlayer]){
         if(imagePointer.x>COLS){
@@ -170,12 +200,19 @@ function displayPlayerTiles(){
         drawTile(tile, imagePointer);
         imagePointer.x++;
     }
+    pop();
 }
 
 var currentGroupLength = 0;
 function displayBoardTiles(){
+  push();
+  translate(sizeX/2, sizeY/2)
   let imagePointer = createVector(0,0);
   for(let i=0;i<board.length;i++){
+    if(keyCode == 32 && i == board.length-1){
+        drawTile('', imagePointer)
+    }
+
     if(board[i]!=''){
        drawTile(board[i],imagePointer);
     }else{
@@ -192,10 +229,19 @@ function displayBoardTiles(){
     }
     imagePointer.x++;
   }
+  pop();
 }
 
 function drawTile(tile,pos){
     push();
+    if(tile==''){
+        translate(pos.x*sizeX, pos.y*sizeY);
+        fill(205,50)
+        rect(0,0, sizeX, sizeY, 10);
+        pop()
+        return;
+    }
+
     if(mouseX>pos.x*sizeX && mouseX<(pos.x+1)*sizeX &&
         mouseY>pos.y*sizeY && mouseY<(pos.y+1)*sizeY){
 
@@ -224,6 +270,12 @@ function drawTile(tile,pos){
         text('J',0,0);
     }
     pop();
+}
+
+function keyPressed(){
+    if( keyCode == 32){
+        board.push('')
+    }
 }
 
 function mousePressed(){
@@ -262,4 +314,5 @@ function mouseReleased(){
 
   }
   selectedTile = createVector(-1,-1);
+   updateBoardScore();
 }
