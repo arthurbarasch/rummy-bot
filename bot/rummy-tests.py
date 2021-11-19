@@ -23,6 +23,25 @@ class RummyTestCase(unittest.TestCase):
         test = len(before) == 1 and before[0] in self.model.players[0]
         self.assertTrue(test)
 
+    def test_table_constraint(self):
+        self.model.restart()
+        self.model.addGroup([(1, 13), (2, 13), (3, 13)])
+        a = RummyModel(self.model)
+        self.assertTrue(a.checkTableConstraint(self.model))
+        a.addGroup([(1, 12), (2, 12), (3, 12)])
+        self.assertTrue(a.checkTableConstraint(self.model))
+        a.restart()
+        self.assertFalse(a.checkTableConstraint(self.model))
+
+        #Filtered tests
+        self.model.restart()
+        self.model.addRun([(1, 11), (1, 12), (1, 13)])
+        a.restart()
+        a.addRun([(1,10),(1, 11), (1, 12)])
+        self.assertTrue(a.checkTableConstraint(self.model,filter_value=11))
+        self.assertTrue(a.checkTableConstraint(self.model,filter_value=12))
+        self.assertFalse(a.checkTableConstraint(self.model))
+
     def test_total_tile_pool(self):
         self.model.restart()
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
@@ -36,6 +55,7 @@ class RummyTestCase(unittest.TestCase):
         self.model.restart()
         self.assertEquals(len(self.model.board["runs"]), 0)
         self.assertEquals(len(self.model.board["groups"]), 0)
+        self.assertEquals(len(self.model.drawPile), n*k*m)
         for p in self.model.players:
             self.assertEquals(len(p),0, "Player must have 0 tiles after 'restart()'")
 

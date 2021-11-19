@@ -89,19 +89,21 @@ class RummyModel:
         else:
             return sorted(temp,key=lambda tile: tile[1])
 
-    def getBoardTilePool(self):
+    def getBoardTilePool(self,filter_value=None):
         temp = []
         for run in self.board.get('runs'):
             temp.extend(run)
         for group in self.board.get('groups'):
             temp.extend(group)
-        return temp
+        return temp if filter_value is None else list(filter(lambda t: t[1] == filter_value, temp))
 
     # Check to see if current model satisfies the table constraint (defined by 'board' parameter)
-    # i.e. check wether all tiles that were present in 'board', are also present in current model
-    def checkTableConstraint(self, board ):
-        temp = board[:]
-        for tile in self.getBoardTilePool():
+    # i.e. check wether all tiles that were present in 'previous' board, are also present in current board
+    # Params:
+    # value - if specified, only check table constraint for tiles of that value
+    def checkTableConstraint(self, previous, filter_value=None):
+        temp = previous.getBoardTilePool(filter_value)
+        for tile in self.getBoardTilePool(filter_value):
             if tile in temp:
                 temp.remove(tile)
             if len(temp) == 0:

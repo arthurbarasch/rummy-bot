@@ -42,8 +42,8 @@ class RummySolver:
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
             groupScores = self.totalGroupSize(new_hands[i],solutions[i]) * value
-            if not solutions[i].checkTableConstraint(self.model.getBoardTilePool()):
-                continue
+            # if not solutions[i].checkTableConstraint(self.model, value):
+            #     continue
 
             score, solutions[i], nextRunHash = self.maxScore(value + 1, new_runs[i], solutions[i])
             result = groupScores + run_scores[i] + score
@@ -51,11 +51,8 @@ class RummySolver:
             logging.warning(debugStr)
             if runHash not in self.score[value-1] or result > self.score[value-1][runHash][0]:
                 self.score[value-1][runHash] = (result,solutions[i],nextRunHash)
+        return self.score[value-1][runHash][0], self.score[value-1][runHash][1], runHash
 
-        if runHash in self.score[value - 1]:
-            return self.score[value-1][runHash][0], self.score[value-1][runHash][1], runHash
-        else:
-            return 0, solution, ''
 
     def makeRuns(self,hand, runs, value,solution:RummyModel):
         currTiles = hand[:]
@@ -88,7 +85,7 @@ class RummySolver:
                         ret['solutions'].append(newSolution)
                     currTiles.remove(searchTile)
                     ret['new_runs'].append(newRun)
-                    ret['new_hands'].append(currTiles[:]) #TODO: remove tile used from hand
+                    ret['new_hands'].append(currTiles[:])
                 else:
                     newRun = np.array(runs)
                     newRun[suit-1,M] = 0
