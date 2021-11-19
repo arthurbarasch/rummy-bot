@@ -32,6 +32,13 @@ class RummyTestCase(unittest.TestCase):
         temp = self.model.getTotalTilePool()
         self.assertEquals([(1, 5), (1, 10), (2, 10), (3, 10)], temp)
 
+    def test_restart(self):
+        self.model.restart()
+        self.assertEquals(len(self.model.board["runs"]), 0)
+        self.assertEquals(len(self.model.board["groups"]), 0)
+        for p in self.model.players:
+            self.assertEquals(len(p),0, "Player must have 0 tiles after 'restart()'")
+
     def test_start(self):
         self.model.start()
         self.assertEqual(n, len(N))
@@ -56,12 +63,6 @@ class RummyTestCase(unittest.TestCase):
         self.model.getCurrentPlayer().append((3, 7))
         solver = RummySolver(self.model)
         self.assertEqual(15, solver._maxScore())
-
-    # def test_make_runs_all_tiles(self):
-    #     self.model.restart()
-    #     self.model.giveAllTilesToCurrentPlayer()
-    #     solver = RummySolver(self.model)
-    #     self.assertEqual(728, solver._maxScore())
 
     def test_make_groups(self):
         self.model.restart()
@@ -90,6 +91,12 @@ class RummyTestCase(unittest.TestCase):
         solver = RummySolver(self.model)
         self.assertEqual(39, solver._maxScore())
 
+
+    # def test_make_runs_all_tiles(self):
+    #     self.model.restart()
+    #     self.model.giveAllTilesToCurrentPlayer()
+    #     solver = RummySolver(self.model)
+    #     self.assertEqual(728, solver._maxScore())
 
 if __name__ == '__main__':
     unittest.main()

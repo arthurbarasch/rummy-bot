@@ -42,15 +42,20 @@ class RummySolver:
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
             groupScores = self.totalGroupSize(new_hands[i],solutions[i]) * value
+            if not solutions[i].checkTableConstraint(self.model.getBoardTilePool()):
+                continue
+
             score, solutions[i], nextRunHash = self.maxScore(value + 1, new_runs[i], solutions[i])
             result = groupScores + run_scores[i] + score
-
             debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores,result)
             logging.warning(debugStr)
             if runHash not in self.score[value-1] or result > self.score[value-1][runHash][0]:
                 self.score[value-1][runHash] = (result,solutions[i],nextRunHash)
 
-        return self.score[value-1][runHash][0], self.score[value-1][runHash][1], runHash
+        if runHash in self.score[value - 1]:
+            return self.score[value-1][runHash][0], self.score[value-1][runHash][1], runHash
+        else:
+            return 0, solution, ''
 
     def makeRuns(self,hand, runs, value,solution:RummyModel):
         currTiles = hand[:]
@@ -61,7 +66,7 @@ class RummySolver:
                 if searchTile in currTiles:
                     runVal = runs[suit-1,M]
                     newRun = np.array(runs)
-                    if value == 13  and runVal == 2:
+                    if value == 13 and runVal == 2:
                         logging.warning('\n*runs* = {}\t\n\n'.format(newRun))
 
                     if runVal < 2:  # If current length of run 0 or 1, increase length by one
@@ -83,7 +88,7 @@ class RummySolver:
                         ret['solutions'].append(newSolution)
                     currTiles.remove(searchTile)
                     ret['new_runs'].append(newRun)
-                    ret['new_hands'].append(hand[:])
+                    ret['new_hands'].append(currTiles[:]) #TODO: remove tile used from hand
                 else:
                     newRun = np.array(runs)
                     newRun[suit-1,M] = 0
@@ -98,15 +103,21 @@ class RummySolver:
 
     # Return the total group size that can be formed from the given 'hand'
     def totalGroupSize(self,hand,solutions):
-        noDuplicates = set(hand)
-        for item in noDuplicates:
-            hand.remove(item)
-
+        temp = hand[:]
+        noDuplicates = list(set(hand))
         l1 = len(noDuplicates)
-        l2 = len(hand)
         if l1 >= 3:
-            solutions.addGroup(list(noDuplicates))
-        return (l1 if l1 >= 3 else 0) + (l2-l1 if l2 >= 3 else 0) #TODO Check this line
+            solutions.addGroup(noDuplicates)
+            for tile in noDuplicates:
+                hand.remove(tile)
+
+        for item in noDuplicates:
+            temp.remove(item)
+        l2 = len(temp)
+        if l2 >= 3:
+            solutions.addGroup(hand)
+            hand = []
+        return (l1 if l1 >= 3 else 0) + (l2 if l2 >= 3 else 0) #TODO Check this line
 
     @staticmethod
     def getRunHash(run):

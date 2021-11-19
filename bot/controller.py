@@ -40,10 +40,10 @@ def runRummyGame(solve=True):
 
     if solve:
         # Insert example game states here
-        #model.start()
-        model.addGroup([(1,10),(2,10), (3,10)])
-        model.addGroup([(2,3),(3,3), (4,3)])
-        model.addRun([(1,1),(1,2), (1,3)])
+        model.start()
+        model.addGroup([(1, 3),(2, 3), (3, 3), (4, 3)])
+
+
         print('Computing max score for current game state:')
         print(model.getTotalTilePool())
         start = time.time()
