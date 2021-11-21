@@ -87,10 +87,6 @@ class RummyDetector:
     def selectROI(self):
         self.roi = cv2.selectROI(self.img)
 
-
-
-
-
 rd = RummyDetector()
 
 @app.route('/', methods=['POST', 'GET'])

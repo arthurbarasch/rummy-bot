@@ -101,8 +101,8 @@ class RummyModel:
     # i.e. check wether all tiles that were present in 'previous' board, are also present in current board
     # Params:
     # value - if specified, only check table constraint for tiles of that value
-    def checkTableConstraint(self, previous, filter_value=None):
-        temp = previous.getBoardTilePool(filter_value)
+    def checkTableConstraint(self, previousModel, filter_value=None):
+        temp = previousModel.getBoardTilePool(filter_value=filter_value)
         for tile in self.getBoardTilePool(filter_value):
             if tile in temp:
                 temp.remove(tile)

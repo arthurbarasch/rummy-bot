@@ -42,8 +42,8 @@ class RummySolver:
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
             groupScores = self.totalGroupSize(new_hands[i],solutions[i]) * value
-            # if not solutions[i].checkTableConstraint(self.model, value):
-            #     continue
+            if not solutions[i].checkTableConstraint(self.model, value):
+                logging.debug(self.model.getBoardTilePool(filter_value=value))
 
             score, solutions[i], nextRunHash = self.maxScore(value + 1, new_runs[i], solutions[i])
             result = groupScores + run_scores[i] + score
@@ -63,9 +63,8 @@ class RummySolver:
                 if searchTile in currTiles:
                     runVal = runs[suit-1,M]
                     newRun = np.array(runs)
-                    if value == 13 and runVal == 2:
+                    if value == n and runVal == 2:
                         logging.warning('\n*runs* = {}\t\n\n'.format(newRun))
-
                     if runVal < 2:  # If current length of run 0 or 1, increase length by one
                         newRun[suit-1, M]+=1
                         ret['run_scores'].append(0)
@@ -95,16 +94,18 @@ class RummySolver:
                     newSolution = RummyModel(solution)
                     newSolution.validateBoard(filter_suit=suit)
                     ret['solutions'].append(newSolution)
+                    break
+
         hand = list(filter(lambda tile: tile[1] != value , hand))
         return ret['new_runs'], ret['new_hands'], ret['run_scores'], ret['solutions']
 
     # Return the total group size that can be formed from the given 'hand'
-    def totalGroupSize(self,hand,solutions):
+    def totalGroupSize(self,hand,solution):
         temp = hand[:]
         noDuplicates = list(set(hand))
         l1 = len(noDuplicates)
         if l1 >= 3:
-            solutions.addGroup(noDuplicates)
+            solution.addGroup(noDuplicates)
             for tile in noDuplicates:
                 hand.remove(tile)
 
@@ -112,9 +113,9 @@ class RummySolver:
             temp.remove(item)
         l2 = len(temp)
         if l2 >= 3:
-            solutions.addGroup(hand)
+            solution.addGroup(hand)
             hand = []
-        return (l1 if l1 >= 3 else 0) + (l2 if l2 >= 3 else 0) #TODO Check this line
+        return (l1 if l1 >= 3 else 0) + (l2 if l2 >= 3 else 0)
 
     @staticmethod
     def getRunHash(run):
