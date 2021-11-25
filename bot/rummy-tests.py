@@ -8,7 +8,7 @@ from bot import RummyModel, RummySolver, RummyController, RummyView, runRummyGam
 class RummyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.model = runRummyGame(solve=False)
+        self.model, self.view, self.controller = runRummyGame(solve=False)
 
     def tearDown(self) -> None:
         super().tearDown()
@@ -60,6 +60,7 @@ class RummyTestCase(unittest.TestCase):
             self.assertEquals(len(p),0, "Player must have 0 tiles after 'restart()'")
 
     def test_start(self):
+        self.model.restart()
         self.model.start()
         self.assertEqual(n, len(N))
         for player in self.model.players:
@@ -70,6 +71,21 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(k, 4)
         self.assertEqual(m, 2)
 
+    def test_validate_board(self):
+        self.model.addGroup([(1,1),(2,1),(3,1)])
+        self.model.initNewRun((1,13))
+        self.assertEqual(len(self.model.board["runs"][0]), 1)
+        self.assertEqual(self.model.validateBoard(), False)
+        self.assertEqual(self.model.getBoardScore(), 3)
+
+        self.model.restart()
+        self.model.initNewRun((1,1))
+        self.model.addToRuns([(1,2),(1,3)])
+        self.model.initNewRun((2,1))
+        self.assertEquals(self.model.board["runs"][0], [(1,1),(1,2),(1,3)])
+        self.assertEqual(self.model.validateBoard(filter_suit=2), False)
+        self.assertEqual(self.model.getBoardScore(), 6)
+
     # Solver Tests
     def test_total_group_size(self):
         self.model.restart()
@@ -78,6 +94,8 @@ class RummyTestCase(unittest.TestCase):
         groupSize = solver.totalGroupSize([(1,1),(1,1),(2,1),(2,1),(3,1),(3,1)],solution)
         self.assertEqual(6, groupSize)
         self.assertEquals(len(solution.board["groups"]),2)
+        self.assertEquals(set(solution.board["groups"][0]),set([(1,1),(2,1),(3,1)]))
+        self.assertEquals(set(solution.board["groups"][1]),set([(1,1),(2,1),(3,1)]))
         self.assertEquals(len(solution.board["runs"]),0)
 
         solution = RummyModel()
@@ -103,12 +121,11 @@ class RummyTestCase(unittest.TestCase):
         solver = RummySolver(self.model)
         runs = np.zeros(shape=(k, m))
         solution = RummyModel()
-        new_runs,new_hands, run_scores,solutions = solver.makeRuns(self.model.getTotalTilePool(filter_value=2),runs, 2, solution)
-        print(str(new_runs))
+        new_runs,new_hands, run_scores,solutions = solver.makeRuns(self.model.getTotalTilePool(filter_value=4),runs, 4, solution)
         self.assertEqual(len(new_runs), 2)
-        self.assertEqual(len(new_hands), 2)
-        self.assertEqual(len(run_scores), 2)
-        self.assertEqual(len(solutions), 2)
+        self.assertEquals(new_hands,[[],[(2,4)]])
+        self.assertEquals(run_scores,[0,0])
+        self.assertEqual(len(solutions[0].board["runs"]),1)
 
 
 
@@ -126,6 +143,9 @@ class RummyTestCase(unittest.TestCase):
         self.model.addRun([(1, 1), (1, 2), (1, 3)])
         solver = RummySolver(self.model)
         self.assertEqual(45, solver._maxScore())
+        self.assertEqual(solver.solution.board["runs"][0], [(1, 1), (1, 2), (1, 3)])
+        self.assertEqual(set(solver.solution.board["groups"][0]), set([(2, 3), (3, 3), (4, 3)]))
+        self.assertEqual(set(solver.solution.board["groups"][1]), set([(1, 10), (2, 10), (3, 10)]))
 
     def test_add_random_hand(self):
         self.model.restart()

@@ -3,15 +3,17 @@ from bot.model import *
 from bot.solver import RummySolver
 from flask import request, app
 import time
+from threading import Timer
 
 
 class RummyController:
-    def __init__(self, model, view):
+    def __init__(self, model:RummyModel, view:RummyView):
         assert isinstance(model,RummyModel)
         assert isinstance(view,RummyView)
         self.model = model
         self.view = view
         self.solver = RummySolver(self.model)
+        self.botPlayer = NUM_PLAYERS-1
 
     def promptAction(self):
         action = ''
@@ -25,34 +27,42 @@ class RummyController:
         if(action == 'B'):
             while action != 's':
                 action = input('')
-
         self.model.nextPlayer()
 
     def runSolver(self):
-        self.solver.setModel(self.model)
-        self.solver.maxScore()
+        return self.solver.maxScore()
+
+    def nextPlayer(self):
+        self.model.nextPlayer()
+        if self.model.playerTurn == self.botPlayer:
+            Timer(1.0, self.makeMoveBot).start()
+
+
+    def makeMoveBot(self):
+        score, solution = self.solver.maxScore()
+        if score>=30:
+            self.model.copySolution(solution)
+        else:
+            self.model.drawTile(self.model.playerTurn)
+        Timer(1.0, self.nextPlayer).start()
 
 
 def runRummyGame(solve=True):
     model = RummyModel()
     view = RummyView()
     controller = RummyController(model, view)
+    model.start()
 
     if solve:
         # Insert example game states here
-        model.start()
-        model.addGroup([(1, 3),(2, 3), (3, 3), (4, 3)])
-
-
         print('Computing max score for current game state:')
         print(model.getTotalTilePool())
         start = time.time()
-        solver = RummySolver(model)
-        score,solution,hash = solver.maxScore()
+        score,solution = controller.runSolver()
         print('Solution found in {} ms'.format((time.time()-start)*1000 ))
         print('Maximum score for this state: {}'.format(score))
         print('Solution:')
         print(str(solution))
-        print(solver.score)
+        print(controller.solver.score)
 
-    return model
+    return model, view, controller

@@ -36,6 +36,7 @@ function setup() {
   textAlign(CENTER);
   rectMode(CENTER);
   textSize(24);
+  stroke('#bbbbbb')
 }
 
 function draw() {
@@ -62,6 +63,8 @@ function draw() {
     displayBoardTiles();
   }
   displayPlayerTiles();
+
+  displayPlayerTurnIndicator();
 }
 
 function displaySolution(){
@@ -86,12 +89,15 @@ function updateBoardScore(){
 }
 
 function createControlButtons(){
+  buttons = []
+
   endMoveButton = createButton('END MOVE');
   endMoveButton.mousePressed(endPlayerMove);
   endMoveButton.addClass('disabled');
   buttons.push(endMoveButton)
 
-  restartButton = createButton('Restart');
+  restartButton = createButton('NEW GAME (restart)');
+  restartButton.addClass('btn-green')
   restartButton.mousePressed(restartBoard);
   buttons.push(restartButton)
 
@@ -120,49 +126,6 @@ function createControlButtons(){
   }
 }
 
-function selectRoi(){
-    let url = '/select-roi';
-    httpGet(url,'json',false,function(data){
-    });
-}
-
-function solveTable(){
-    let url = '/solve';
-    httpGet(url,'json',false,function(data){
-        boardModified = false;
-        endMoveButton.addClass('disabled');
-        currMaxScore = data.score
-        solution = JSON.parse(data.solution)
-        print(solution)
-    });
-}
-
-function drawRandomTile(){
-    let url = '/draw-tile';
-    httpGet(url,'json',false,function(){
-        print("Draw new tile");
-        boardModified = false;
-        endMoveButton.addClass('disabled');
-    })
-}
-
-function addRandomHand(){
-    let url = '/add-hand';
-    httpGet(url,'json',false,function(){
-        print("Add random hand");
-        boardModified = false;
-        endMoveButton.addClass('disabled');
-    })
-}
-
-function restartBoard(){
-    let url = '/restart';
-    httpGet(url,'json',false,function(){
-        print("Board restart");
-        boardModified = false;
-        endMoveButton.addClass('disabled');
-    })
-}
 
 function updateGameState(){
     if(frameCount%20==1 && !boardModified && !solution){
@@ -183,9 +146,28 @@ function setGameState(state){
         board.push(...group)
         board.push('')
     }
+
+    lastPlayer = selectedPlayer
     selectedPlayer = state.playerTurn;
+    if(selectedPlayer != lastPlayer){
+        displayPlayerTurnIndicator(100)
+    }
+
+
     players = state.players;
     updateBoardScore();
+}
+
+var turnIndicatorPhase = 0
+function displayPlayerTurnIndicator(ms){
+    let interval;
+    if(!ms && turnIndicatorPhase>0){
+        turnIndicatorPhase--;
+        rect(width/2, height/2, 300,90)
+        text("Player "+(selectedPlayer+1)+",\nit's your turn", width/2, height/2)
+    }else if(ms > 0){
+        turnIndicatorPhase = ms
+    }
 }
 
 function displayPlayerTiles(){
@@ -270,49 +252,4 @@ function drawTile(tile,pos){
         text('J',0,0);
     }
     pop();
-}
-
-function keyPressed(){
-    if( keyCode == 32){
-        board.push('')
-    }
-}
-
-function mousePressed(){
-    selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY)) ;
-    boardModified = true;
-}
-
-function endPlayerMove(){
-    boardModified = false;
-    endMoveButton.addClass('disabled');
-    postData = JSON.stringify({board, players})
-    let url = '/end-move';
-    httpPost(url,'json',false,function(data){
-
-    })
-}
-
-
-function mouseReleased(){
-  let newTileLocation = createVector(floor(mouseX/sizeX),floor(mouseY/sizeY))
-  if(newTileLocation.y>=ROWS){ //Moved to player tileset
-
-  }else{
-    let index = newTileLocation.y*COLS+newTileLocation.x;
-    let tileValue;
-    if(selectedTile.y>=ROWS){ //Moved from player tileset
-      tileValue = players[selectedPlayer][selectedTile.y-ROWS+selectedTile.x]
-      players[selectedPlayer].splice(selectedTile.y-ROWS+selectedTile.x,1) //Remove from player's tileset
-    }else{
-      tileValue = board[selectedTile.y*COLS+selectedTile.x]
-      board.splice(selectedTile.y*COLS+selectedTile.x,1) //Remove from board tileset
-    }
-
-    endMoveButton.removeClass('disabled');
-    board.splice(index,0,tileValue); //Add to board tileset
-
-  }
-  selectedTile = createVector(-1,-1);
-   updateBoardScore();
 }

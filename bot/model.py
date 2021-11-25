@@ -39,6 +39,10 @@ class RummyModel:
     def __repr__(self) -> str:
         return super().__repr__()
 
+    def copySolution(self, model):
+        self.board = model.board
+        self.players[self.playerTurn] = model.players[self.playerTurn]
+
     def giveAllTilesToCurrentPlayer(self):
         self.drawTile(self.playerTurn, k*n*m)
 
@@ -77,6 +81,14 @@ class RummyModel:
         if(self.playerTurn>=0 and self.playerTurn<len(self.players)):
             return self.players[self.playerTurn]
 
+    def getBoardTilePool(self,filter_value=None):
+        temp = []
+        for run in self.board.get('runs'):
+            temp.extend(run)
+        for group in self.board.get('groups'):
+            temp.extend(group)
+        return temp if filter_value is None else list(filter(lambda t: t[1] == filter_value, temp))
+
     # Return the tile pool which is defined to be the board + current player tiles
     # Params:
     # filter_value - if specified, return the tile pool filtered out on the given 'filter_value',
@@ -89,13 +101,6 @@ class RummyModel:
         else:
             return sorted(temp,key=lambda tile: tile[1])
 
-    def getBoardTilePool(self,filter_value=None):
-        temp = []
-        for run in self.board.get('runs'):
-            temp.extend(run)
-        for group in self.board.get('groups'):
-            temp.extend(group)
-        return temp if filter_value is None else list(filter(lambda t: t[1] == filter_value, temp))
 
     # Check to see if current model satisfies the table constraint (defined by 'board' parameter)
     # i.e. check wether all tiles that were present in 'previous' board, are also present in current board
@@ -106,9 +111,7 @@ class RummyModel:
         for tile in self.getBoardTilePool(filter_value):
             if tile in temp:
                 temp.remove(tile)
-            if len(temp) == 0:
-                return True
-        return False
+        return len(temp) == 0
 
 
     def isGameOver(self):
@@ -153,7 +156,8 @@ class RummyModel:
 
 
     def addRun(self, run):
-        assert len(run) >= 3
+        if len(run) < 3:
+            return False
         suit = run[0][0]
         value = 0
         for tile in run:
@@ -178,18 +182,34 @@ class RummyModel:
     # Adds the input list of tiles to any runs available
     def addToRuns(self, tiles):
         for tile in tiles:
-            runExists = False
+            tileInserted = False
             for run in self.board['runs']:
-                if run[-1][1]-1 == tile[1] and run[-1][0] == tile[0]:
+                if run[-1][1]+1 == tile[1] and run[-1][0] == tile[0]:
+                    tileInserted = True
                     run.append(tile)
-                    runExists = True
                     break
+            if tileInserted == False:
+                logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
+                assert tileInserted == False
 
-    # Checks to see if all groups and runs on the board are of valid length
+    # Checks to see if all groups and runs on the board are valid
     # Remove invalid hands
-    def validateBoard(self,filter_suit):
-        self.board["runs"] = [ run for run in self.board["runs"] if len(run)>=3 or run[0][0]!=filter_suit ]
-        self.board["groups"] = [ group for group in self.board["groups"] if len(group)>=3 or group[0][0]!=filter_suit]
+    def validateBoard(self,filter_suit=None):
+        prev = RummyModel(self)
+        self.board["runs"] = []
+        self.board["groups"] = []
+
+        valid = True
+        for run in prev.board["runs"]:
+            if filter_suit and run[0][0] != filter_suit:
+                self.board["runs"].append(run)
+                continue
+            if not self.addRun(run):
+                valid = False
+        for group in prev.board["groups"]:
+            if not self.addGroup(group):
+                valid = False
+        return valid
 
     def encodeJSON(self):
         return json.dumps({
@@ -197,6 +217,19 @@ class RummyModel:
             'players':self.players,
             'playerTurn':self.playerTurn
         })
+
+    def decodeJSON(self, data):
+        data = json.loads(data)
+        print(data)
+        set = []
+        for tile in data['board']:
+            if tile != '':
+                set.append((tile[0], tile[1]))
+            elif not self.addRun(set) and not self.addGroup(set):
+                return False
+            else:
+                set = []
+        return True
 
     def __str__(self):
         str = 'Board: {}\nDraw pile({}): {}\nPlayers({},{}):{}'

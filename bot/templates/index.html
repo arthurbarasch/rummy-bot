@@ -9,18 +9,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
     <script src="https://unpkg.com/p5.js-svg@1.1.1"></script>
-<!--    <link href="./static/styles.css" type="text/css" rel="stylesheet"/>-->
+    <link href="./static/styles.css" type="text/css" rel="stylesheet"/>
 </head>
 <body class="bg-dark text-white">
     <div class="container-fluid mt-0">
         <div class="row">
             <div class="col-md-5 col-12 p-2">
-                <h3 class="mt-4 text-white">RummyBot</h3>
-                <img src="{{ url_for('video_feed') }}">
-                <form class="form-group" id="controls-form" method="post">
-                    Canny Edge detection: <input type="range" min="30" max="250" value="100"  name="canny" id="canny">
-                    <input class="btn" type="submit" value="Save!" name="save" id="save">
-                </form>
+<!--                <h3 class="mt-4 text-white">RummyBot</h3>-->
+<!--                <img src="{{ url_for('video_feed') }}">-->
+<!--                <form class="form-group" id="controls-form" method="post">-->
+<!--                    Canny Edge detection: <input type="range" min="30" max="250" value="100"  name="canny" id="canny">-->
+<!--                    <input class="btn" type="submit" value="Save!" name="save" id="save">-->
+<!--                </form>-->
             </div>
             <div class="col-md-7 col-12 p-3" id="canvas-container">
 
@@ -59,6 +59,8 @@
     </script>
 <!--#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-->
     <script language="JavaScript" type="text/javascript" src="static/sketch.js">
+    </script>
+    <script language="JavaScript" type="text/javascript" src="static/events.js">
     </script>
 
 </body>

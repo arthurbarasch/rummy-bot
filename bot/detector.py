@@ -12,6 +12,7 @@ from scipy.io import loadmat
 import pytesseract as tess
 from bot.controller import runRummyGame
 from bot.solver import RummySolver
+from bot.model import RummyModel
 
 #Initialize the Flask app
 app = Flask(__name__)
@@ -21,7 +22,7 @@ FRAME_INTERVAL = 40
 camera = cv2.VideoCapture(0)
 
 #Rummy model
-model = None
+model,view,controller = None,None,None
 rummyBotSolutions = []
 currSolutionIndex = -1
 
@@ -91,12 +92,12 @@ rd = RummyDetector()
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
-    global model
+    global model,view,controller
     if request.method == "POST":
         req = request.form.get("canny")
         if req:
             rd.setCanny(int(req))
-    model = runRummyGame(solve=True)
+    model, view, controller = runRummyGame(solve=False)
     return render_template('index.html')
 
 @app.route('/video_feed')
@@ -118,8 +119,17 @@ def sendGameState():
 
 @app.route('/end-move', methods=['POST','GET'])
 def endMove():
-    global model
-    return {}
+    global model, controller
+    prev = RummyModel(model)
+    model.board["runs"] = []
+    model.board["groups"] = []
+    valid = model.decodeJSON(request.data)
+    print('Validity {}'.format(valid))
+    if valid:
+        Timer(1.0, controller.nextPlayer).start()
+    else:
+        model = prev
+    return {'valid': valid}
 
 @app.route('/restart', methods=['POST','GET'])
 def restart():
@@ -138,14 +148,13 @@ def addRandomHand():
 
 @app.route('/draw-tile', methods=['POST','GET'])
 def drawTile():
-    global model
+    global model, controller
     model.drawTile(model.playerTurn)
-    Timer(2.5,model.nextPlayer).start()
+    Timer(1.0,controller.nextPlayer).start()
     return {}
 
 def nextSolution():
-    global  currSolutionIndex
-    global rummyBotSolutions
+    global currSolutionIndex, rummyBotSolutions
     currSolutionIndex +=1
     if currSolutionIndex>=len(rummyBotSolutions):
         currSolutionIndex=-1
@@ -157,9 +166,7 @@ def nextSolution():
 def solve():
     global model, rummyBotSolutions
     solver = RummySolver(model)
-    score,solution,runHash = solver.maxScore()
-    #rummyBotSolutions = solver.traceSolution(runHash)
-    #nextSolution()
+    score,solution = solver.maxScore()
     print(solution.encodeJSON())
     return {'score':score, 'solution': solution.encodeJSON()}
 
@@ -169,7 +176,5 @@ def selectROI():
     rd.selectROI()
     return {}
 
-
-
 def startLocalServer():
-    app.run(debug=True)
+    app.run(debug=False)
