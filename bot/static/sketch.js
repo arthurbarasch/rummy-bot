@@ -90,7 +90,6 @@ function updateBoardScore(){
 
 function createControlButtons(){
   buttons = []
-
   endMoveButton = createButton('END MOVE');
   endMoveButton.mousePressed(endPlayerMove);
   endMoveButton.addClass('disabled');
@@ -126,14 +125,6 @@ function createControlButtons(){
   }
 }
 
-
-function updateGameState(){
-    if(frameCount%20==1 && !boardModified && !solution){
-        let url = '/game-state';
-        httpGet(url,'json',false,setGameState)
-    }
-}
-
 function setGameState(state){
     board = [];
     if(!state || !state.board) return
@@ -152,7 +143,6 @@ function setGameState(state){
     if(selectedPlayer != lastPlayer){
         displayPlayerTurnIndicator(100)
     }
-
 
     players = state.players;
     updateBoardScore();
@@ -175,7 +165,7 @@ function displayPlayerTiles(){
     translate(sizeX/2, sizeY/2)
     let imagePointer = createVector(0,ROWS);
     for(let tile of players[selectedPlayer]){
-        if(imagePointer.x>COLS){
+        if(imagePointer.x>=COLS){
           imagePointer.x = 0
           imagePointer.y++;
         }

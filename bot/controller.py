@@ -15,6 +15,10 @@ class RummyController:
         self.solver = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS-1
 
+    def setModel(self, model:RummyModel):
+        self.__init__(model, self.view)
+
+
     def promptAction(self):
         action = ''
         while action != 'A' and action != 'B':
@@ -37,8 +41,8 @@ class RummyController:
         if self.model.playerTurn == self.botPlayer:
             Timer(1.0, self.makeMoveBot).start()
 
-
     def makeMoveBot(self):
+        self.solver.setModel(self.model)
         score, solution = self.solver.maxScore()
         if score>=30:
             self.model.copySolution(solution)
@@ -46,13 +50,13 @@ class RummyController:
             self.model.drawTile(self.model.playerTurn)
         Timer(1.0, self.nextPlayer).start()
 
-
 def runRummyGame(solve=True):
     model = RummyModel()
     view = RummyView()
     controller = RummyController(model, view)
-    model.start()
-
+    #model.start()
+    model.addGroup([(1,13),(2,13),(3,13)],useDrawPile=True)
+    model.addRun([(1,11),(1,12),(1,13)])
     if solve:
         # Insert example game states here
         print('Computing max score for current game state:')

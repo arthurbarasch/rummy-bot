@@ -1,5 +1,6 @@
 import unittest
 from builtins import int
+import json
 import numpy as np
 
 from bot import RummyModel, RummySolver, RummyController, RummyView, runRummyGame, k, K, m, n, N, NUM_PLAYERS
@@ -72,6 +73,7 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(m, 2)
 
     def test_validate_board(self):
+        self.model.restart()
         self.model.addGroup([(1,1),(2,1),(3,1)])
         self.model.initNewRun((1,13))
         self.assertEqual(len(self.model.board["runs"][0]), 1)
@@ -85,6 +87,18 @@ class RummyTestCase(unittest.TestCase):
         self.assertEquals(self.model.board["runs"][0], [(1,1),(1,2),(1,3)])
         self.assertEqual(self.model.validateBoard(filter_suit=2), False)
         self.assertEqual(self.model.getBoardScore(), 6)
+
+    def test_encode_decode(self):
+        self.model.restart()
+        self.model.addGroup([(1,1),(2,1),(3,1)])
+        self.model.addRun([(4,1),(4,2),(4,3)])
+        encoding = json.loads(self.model.encodeJSON())
+        self.assertEqual(encoding['board']['runs'][0], [[4,1],[4,2],[4,3]])
+        self.model.initNewRun((1,13))
+
+        encoding = json.dumps({'board':[(1,12), (1,13)], 'players':[]})
+        self.assertFalse(self.model.decodeJSON(encoding))
+
 
     # Solver Tests
     def test_total_group_size(self):
@@ -138,14 +152,12 @@ class RummyTestCase(unittest.TestCase):
 
     def test_make_groups_and_runs(self):
         self.model.restart()
-        self.model.addGroup([(1, 10), (2, 10), (3, 10)])
-        self.model.addGroup([(2, 3), (3, 3), (4, 3)])
+        self.model.addGroup([(1, 3), (3, 3), (4, 3)])
         self.model.addRun([(1, 1), (1, 2), (1, 3)])
         solver = RummySolver(self.model)
-        self.assertEqual(45, solver._maxScore())
+        self.assertEqual(15, solver._maxScore())
         self.assertEqual(solver.solution.board["runs"][0], [(1, 1), (1, 2), (1, 3)])
-        self.assertEqual(set(solver.solution.board["groups"][0]), set([(2, 3), (3, 3), (4, 3)]))
-        self.assertEqual(set(solver.solution.board["groups"][1]), set([(1, 10), (2, 10), (3, 10)]))
+        self.assertEqual(set(solver.solution.board["groups"][0]), set([(1, 3), (3, 3), (4, 3)]))
 
     def test_add_random_hand(self):
         self.model.restart()
@@ -159,6 +171,10 @@ class RummyTestCase(unittest.TestCase):
         solver = RummySolver(self.model)
         self.assertEqual(39, solver._maxScore())
 
+        self.model.restart()
+        self.model.initNewRun((1, 13))
+        solver = RummySolver(self.model)
+        self.assertEqual(0, solver._maxScore())
 
     # def test_make_runs_all_tiles(self):
     #     self.model.restart()

@@ -106,29 +106,27 @@ def video_feed():
 
 @app.route('/game-state', methods=['POST','GET'])
 def sendGameState():
-    global model
+    global controller
     global currSolutionIndex
     global rummyBotSolutions
 
-    if model:
+    if controller.model:
         if currSolutionIndex>=0 and currSolutionIndex<len(rummyBotSolutions):
             return rummyBotSolutions[currSolutionIndex].encodeJSON()
-        return model.encodeJSON()
+        return controller.model.encodeJSON()
     else:
         return {}
 
 @app.route('/end-move', methods=['POST','GET'])
 def endMove():
-    global model, controller
-    prev = RummyModel(model)
-    model.board["runs"] = []
-    model.board["groups"] = []
-    valid = model.decodeJSON(request.data)
-    print('Validity {}'.format(valid))
+    global controller
+    prev = RummyModel(controller.model)
+    valid = controller.model.decodeJSON(request.data)
     if valid:
+        print('Validity {}'.format(valid))
         Timer(1.0, controller.nextPlayer).start()
     else:
-        model = prev
+        controller.setModel(prev)
     return {'valid': valid}
 
 @app.route('/restart', methods=['POST','GET'])
@@ -167,7 +165,6 @@ def solve():
     global model, rummyBotSolutions
     solver = RummySolver(model)
     score,solution = solver.maxScore()
-    print(solution.encodeJSON())
     return {'score':score, 'solution': solution.encodeJSON()}
 
 @app.route('/select-roi', methods=['POST','GET'])

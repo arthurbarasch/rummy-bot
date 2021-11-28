@@ -1,3 +1,9 @@
+function updateGameState(){
+    if(frameCount%20==1 && !boardModified && !solution){
+        let url = '/game-state';
+        httpGet(url,'json',false,setGameState)
+    }
+}
 
 function selectRoi(){
     let url = '/select-roi';
@@ -48,7 +54,7 @@ function endPlayerMove(){
     let url = '/end-move';
     httpPost(url,'json',postData,function(data){
         console.log('Board valid? ' +data.valid)
-        if(data.valid){
+        if(data.valid == "true"){
             boardModified = false;
             endMoveButton.addClass('disabled');
         }
@@ -63,29 +69,42 @@ function keyPressed(){
 }
 
 function mousePressed(){
-    selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY)) ;
+    selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY));
+    if(selectedTile.x <0 || selectedTile.x>COLS || selectedTile.y <0 || selectedTile.y>ROWS ){
+        selectedTile = createVector(-1,-1)
+    }
     boardModified = true;
 }
 
 function mouseReleased(){
   let newTileLocation = createVector(floor(mouseX/sizeX),floor(mouseY/sizeY))
   if(newTileLocation.y>=ROWS){ //Moved to player tileset
+    let index = (newTileLocation.y-ROWS)*COLS+newTileLocation.x;
+    let tileValue;
 
+    //Moved from player tileset (cannot move from board as to satisfy table contraint)
+    if(selectedTile.y>=ROWS){
+      tileValue = players[selectedPlayer][(selectedTile.y-ROWS)*COLS+selectedTile.x]
+      players[selectedPlayer].splice((selectedTile.y-ROWS)*COLS+selectedTile.x,1) //Remove from player's tileset
+      players[selectedPlayer].splice(index,0,tileValue); //Add to player tileset
+    }
   }else{
     let index = newTileLocation.y*COLS+newTileLocation.x;
     let tileValue;
-    if(selectedTile.y>=ROWS){ //Moved from player tileset
+
+    //Moved from player tileset
+    if(selectedTile.y>=ROWS){
       tileValue = players[selectedPlayer][selectedTile.y-ROWS+selectedTile.x]
       players[selectedPlayer].splice(selectedTile.y-ROWS+selectedTile.x,1) //Remove from player's tileset
+
+    // Moved from board tileset
     }else{
       tileValue = board[selectedTile.y*COLS+selectedTile.x]
       board.splice(selectedTile.y*COLS+selectedTile.x,1) //Remove from board tileset
     }
-
     endMoveButton.removeClass('disabled');
     board.splice(index,0,tileValue); //Add to board tileset
-
   }
   selectedTile = createVector(-1,-1);
-   updateBoardScore();
+  updateBoardScore();
 }

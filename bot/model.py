@@ -138,7 +138,7 @@ class RummyModel:
         return score
 
 
-    def addGroup(self, group):
+    def addGroup(self, group, useDrawPile=False):
         if len(group) < 3:
             return False
         temp = [tile[0] for tile in group]
@@ -147,9 +147,11 @@ class RummyModel:
         temp = [tile[1] for tile in group]
         if len(set(temp)) != 1: # Ensure all tiles in group have same numbered value
             return False
-        for g in group:
-            if g not in self.drawPile:
-                return False
+
+        if useDrawPile:
+            for tile in group:
+                if tile not in self.drawPile:
+                    return False
 
         self.board['groups'].append(group)
         return True
@@ -198,7 +200,6 @@ class RummyModel:
         prev = RummyModel(self)
         self.board["runs"] = []
         self.board["groups"] = []
-
         valid = True
         for run in prev.board["runs"]:
             if filter_suit and run[0][0] != filter_suit:
@@ -211,6 +212,7 @@ class RummyModel:
                 valid = False
         return valid
 
+    # Encode current state
     def encodeJSON(self):
         return json.dumps({
             'board':self.board,
@@ -219,16 +221,35 @@ class RummyModel:
         })
 
     def decodeJSON(self, data):
+        self.board["runs"] = []
+        self.board["groups"] = []
+        self.players = []
         data = json.loads(data)
         print(data)
         set = []
+        last = len(data["board"])
+        if last>=0 and data["board"][last-1] != '':
+            data["board"].append('')
+
         for tile in data['board']:
+            # Empty string '' represents a break between sets in the frontend
             if tile != '':
+                # Frontend returns tiles as lists instead of tuple, make conversion
                 set.append((tile[0], tile[1]))
             elif not self.addRun(set) and not self.addGroup(set):
+                # Try adding the set to the model as a run or group
+                # If neither is valid, return False (board invalid)
                 return False
             else:
                 set = []
+
+        for player in data['players']:
+            self.players.append([])
+            for tile in player:
+                # Frontend returns tiles as lists instead of tuple, make conversion
+                self.players[-1].append((tile[0], tile[1]))
+
+        assert len(self.players) == NUM_PLAYERS
         return True
 
     def __str__(self):

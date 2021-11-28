@@ -31,6 +31,7 @@ class RummySolver:
 
     def maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel()):
         if value > n:
+            solution.validateBoard()
             return 0, solution
         runHash = self.getRunHash(runs)
         if runHash in self.score[value-1]:
