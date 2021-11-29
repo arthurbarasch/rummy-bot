@@ -22,7 +22,7 @@ FRAME_INTERVAL = 40
 camera = cv2.VideoCapture(0)
 
 #Rummy model
-model,view,controller = None,None,None
+controller = None,None,None
 rummyBotSolutions = []
 currSolutionIndex = -1
 
@@ -92,12 +92,12 @@ rd = RummyDetector()
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
-    global model,view,controller
+    global controller
     if request.method == "POST":
         req = request.form.get("canny")
         if req:
             rd.setCanny(int(req))
-    model, view, controller = runRummyGame(solve=False)
+    controller = runRummyGame(solve=False)
     return render_template('index.html')
 
 @app.route('/video_feed')
@@ -131,23 +131,23 @@ def endMove():
 
 @app.route('/restart', methods=['POST','GET'])
 def restart():
-    global model
+    global controller
     global currSolutionIndex
-    model.restart()
-    model.start()
+    controller.model.restart()
+    controller.model.start()
     currSolutionIndex = -1
     return {}
 
 @app.route('/add-hand', methods=['POST','GET'])
 def addRandomHand():
-    global model
-    model.addRandomHand()
+    global controller
+    controller.model.addRandomHand()
     return {}
 
 @app.route('/draw-tile', methods=['POST','GET'])
 def drawTile():
-    global model, controller
-    model.drawTile(model.playerTurn)
+    global controller
+    controller.model.drawTile(controller.model.playerTurn)
     Timer(1.0,controller.nextPlayer).start()
     return {}
 
@@ -162,14 +162,13 @@ def nextSolution():
 
 @app.route('/solve', methods=['POST','GET'])
 def solve():
-    global model, rummyBotSolutions
-    solver = RummySolver(model)
+    global controller, rummyBotSolutions
+    solver = RummySolver(controller.model)
     score,solution = solver.maxScore()
     return {'score':score, 'solution': solution.encodeJSON()}
 
 @app.route('/select-roi', methods=['POST','GET'])
 def selectROI():
-    global model
     rd.selectROI()
     return {}
 

@@ -21,7 +21,7 @@ class RummyTestCase(unittest.TestCase):
         after = self.model.drawPile[:]
         for item in after:
             before.remove(item)
-        test = len(before) == 1 and before[0] in self.model.players[0]
+        test = len(before) == 1 and before[0] in self.model.getCurrentPlayer()
         self.assertTrue(test)
 
     def test_table_constraint(self):
