@@ -40,8 +40,25 @@ class RummyModel:
         return super().__repr__()
 
     def copySolution(self, model):
+        previous = RummyModel(self)
         self.board = model.board
-        self.players[self.playerTurn] = model.players[self.playerTurn]
+        tiles = self.compareModels(previous)
+        logging.warning("Copying solution from board score {} to board score {} ({} player tiles used this round)".format(previous.getBoardScore(), self.getBoardScore(),len(tiles)))
+        self.players[self.playerTurn] = tiles
+
+    # Compares current model with input model to determine tiles not present on the intersections of board sets.
+    # Return the updated player tiles
+    def compareModels(self, model):
+        tiles = self.getBoardTilePool()
+        for tile in model.getBoardTilePool():
+            if tile in tiles:
+                tiles.remove(tile)
+
+        player = model.getCurrentPlayer()
+        for t in tiles:
+            if t in player:
+                player.remove(t)
+        return player
 
     def giveAllTilesToCurrentPlayer(self):
         self.drawTile(self.playerTurn, k*n*m)

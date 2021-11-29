@@ -9,7 +9,8 @@ from bot import RummyModel, RummySolver, RummyController, RummyView, runRummyGam
 class RummyTestCase(unittest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.model, self.view, self.controller = runRummyGame(solve=False)
+        self.controller = runRummyGame(solve=False)
+        self.model = self.controller.model
 
     def tearDown(self) -> None:
         super().tearDown()
@@ -146,9 +147,10 @@ class RummyTestCase(unittest.TestCase):
     def test_make_groups(self):
         self.model.restart()
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
-        self.model.getCurrentPlayer().append((4, 10))
+        self.model.getCurrentPlayer().append((3, 10))
         solver = RummySolver(self.model)
-        self.assertEqual(40, solver._maxScore())
+        self.assertEqual(30, solver._maxScore())
+        self.assertEqual(len(solver.solution.getCurrentPlayer()), 1)
 
     def test_make_groups_and_runs(self):
         self.model.restart()
