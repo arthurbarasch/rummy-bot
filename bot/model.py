@@ -5,8 +5,8 @@ import logging
 
 # Variables
 NUM_PLAYERS = 2
-m = 2  # Number of copies of the full tile set (without jokers)
-j = 2  # Number of jokers
+m = 1  # Number of copies of the full tile set (without jokers)
+j = 0  # Number of jokers
 n = 13 # Number of different numbered values of tiles
 k = 4  # Number of different suits
 

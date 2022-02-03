@@ -5,6 +5,7 @@ class RummyPlayer(dict):
     def __init__(self, playerNr,human=None, tiles=None):
         self.playerNr = playerNr
         self.tiles = [] if tiles is None else tiles[:]
+        self.quarantine = True
         self.human = True if human else human
         return
 

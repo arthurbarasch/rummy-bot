@@ -30,18 +30,25 @@ class RummySolver:
         return score
 
     def maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel()):
+        # Base case
         if value > n:
             solution.validateBoard()
             return 0, solution
         runHash = self.getRunHash(runs)
+        # Base case: memoization stored in 'score' array
         if runHash in self.score[value-1]:
             logging.warning('\nreturn memoized val:{}\tscore lengths:{}'.format(self.score[value-1][runHash][0], list(map(lambda x: len(x), self.score)) ))
             return self.score[value-1][runHash]
 
         logging.warning('\nSOLUTION:\n'+ str(solution))
 
+        # Get available tiles of tile value: 'value'
         hand = self.model.getTotalTilePool(filter_value=value)
+
+        # Make runs
         new_runs,new_hands, run_scores,solutions = self.makeRuns(hand, runs, value, solution)
+
+        #Assert the arrays have equal length
         assert sum([len(new_runs),len(new_hands),len(run_scores),len(solutions)])/4 == len(new_runs)
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
