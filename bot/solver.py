@@ -44,12 +44,13 @@ class RummySolver:
 
         # Get available tiles of tile value: 'value'
         hand = self.model.getTotalTilePool(filter_value=value)
-
         # Make runs
         new_runs,new_hands, run_scores,solutions = self.makeRuns(hand, runs, value, solution)
 
-        #Assert the arrays have equal length
+        #Assertions about the length of the arrays
         assert sum([len(new_runs),len(new_hands),len(run_scores),len(solutions)])/4 == len(new_runs)
+        assert len(new_runs) < (m+2) ** 4
+
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
             groupScores = self.totalGroupSize(new_hands[i],solutions[i]) * value
@@ -75,41 +76,77 @@ class RummySolver:
                     runs[suit - 1, M] = 0
                     solution.validateBoard(filter_suit=suit)
 
-        # Create or extend runs with available tiles
-        for searchTile in hand:
-            suit, value = searchTile
-            runVal = runs[suit-1,M]
-            newRun = np.array(runs)
-            newSolution = RummyModel(solution)
-            if runVal == 0:
-                newRun[suit-1, M]+=1
-                ret['run_scores'].append(0)
-                newSolution.initNewRun(searchTile)
-            elif runVal == 1:  # If current length of run 0 or 1, increase length by one
-                newRun[suit-1, M]+=1
-                ret['run_scores'].append(0)
-                newSolution.addToRuns([searchTile])
-            elif runVal == 2: # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
-                newRun[suit-1, M]+=1
-                assert newRun[suit-1, M] == 3
-                ret['run_scores'].append((value-2)+(value-1)+value)
-                newSolution.addToRuns([searchTile])
-            elif runVal >=3: # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
-                ret['run_scores'].append(value)
-                newSolution.addToRuns([searchTile])
-            ret['solutions'].append(newSolution)
-            ret['new_runs'].append(newRun)
-            newHand = hand[:]
-            newHand.remove(searchTile)
-            ret['new_hands'].append(newHand)
+        # makeNewRun - recursive function
+        # For each suit, create or extend runs with available tiles
+        self.makeNewRun(hand,np.array(runs),(1, value),RummyModel(solution),ret)
+        assert len(ret['new_runs']) > 0
+        return ret['new_runs'],ret['new_hands'],ret['run_scores'],ret['solutions']
 
-        newRun = np.array(runs)
-        ret['new_runs'].append(newRun)
-        ret['new_hands'].append(hand[:])
-        ret['run_scores'].append(0)
-        newSolution = RummyModel(solution)
-        ret['solutions'].append(newSolution)
-        return ret['new_runs'], ret['new_hands'], ret['run_scores'], ret['solutions']
+    def makeNewRun(self,hand,runs,searchTile,solution,ret,run_scores=0):
+        suit, value = searchTile
+        if suit > k:
+            ret['new_runs'].append(np.array(runs))
+            ret['new_hands'].append(hand[:])
+            ret['run_scores'].append(run_scores)
+            ret['solutions'].append(RummyModel(solution))
+            return
+
+        # TODO: Check for performance
+        tilesAvailable = hand.count(searchTile)
+
+        if tilesAvailable == 0:
+            logging.warning("SKIP")
+            self.makeNewRun(hand, runs,(suit + 1, value), solution, ret,run_scores)
+            return
+
+        # Iterate over possibilites of creating/extending runs of the given suit, value.
+        # (m+1) because we must try tiles in each run individually, and also in both runs at once.
+        for M in range(m+1):
+            if M+1>m and m>=2:
+                if tilesAvailable != m:
+                    continue
+                else:
+                    new_score = 0
+                    for i in range(m):
+                        new_score += self.updateRun(runs,searchTile,i,solution)
+                    newHand = hand[:]
+                    newHand.remove((suit,value))
+                    newHand.remove((suit,value))
+                    # Recursion over suits
+                    self.makeNewRun(newHand,runs,(suit+1, value),solution,ret,run_scores+new_score)
+            else:
+                new_score = self.updateRun(runs,searchTile,M,solution)
+                newHand = hand[:]
+                newHand.remove((suit,value))
+                # Recursion over suits
+                self.makeNewRun(newHand,runs,(suit+1, value),solution,ret,run_scores+new_score)
+
+        # An extra possibility of no tiles of this sort being used for runs
+        self.makeNewRun(hand, runs, (suit + 1, value), solution, ret, run_scores)
+        return
+
+
+    # (Destructive method) Updates the runs array with the given tile, and returns the score added
+    # Also, keeps track of tiles used in the solution
+    def updateRun(self,runs,tile,M,solution):
+        suit, value = tile
+        runVal = runs[suit - 1, M]
+        if runVal == 0:
+            runs[suit - 1, M] += 1
+            solution.initNewRun(tile)
+            return 0
+        elif runVal == 1:  # If current length of run 0 or 1, increase length by one
+            runs[suit - 1, M] += 1
+            solution.addToRuns([tile])
+            return 0
+        elif runVal == 2:  # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
+            runs[suit - 1, M] += 1
+            assert runs[suit - 1, M] == 3
+            solution.addToRuns([tile])
+            return (value - 2) + (value - 1) + value
+        elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
+            solution.addToRuns([tile])
+            return value
 
     # Return the total group size that can be formed from the given 'hand'
     def totalGroupSize(self,hand,solution):
@@ -121,6 +158,7 @@ class RummySolver:
             hand.remove(item)
 
         l2 = len(hand)
+        print('L1 is {} and l2 is {}'.format(l1, l2))
         if l2 >= 3:
             solution.addGroup(hand)
             hand = []

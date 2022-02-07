@@ -5,7 +5,7 @@ import logging
 
 # Variables
 NUM_PLAYERS = 2
-m = 1  # Number of copies of the full tile set (without jokers)
+m = 2  # Number of copies of the full tile set (without jokers)
 j = 0  # Number of jokers
 n = 13 # Number of different numbered values of tiles
 k = 4  # Number of different suits
@@ -62,6 +62,8 @@ class RummyModel:
 
     def giveAllTilesToCurrentPlayer(self):
         self.drawTile(self.playerTurn, k*n*m)
+
+
 
     def restart(self):
         self.__init__()
@@ -155,7 +157,7 @@ class RummyModel:
         return score
 
 
-    def addGroup(self, group, useDrawPile=False):
+    def addGroup(self, group, useDrawPile=False, usePlayerStand=False):
         if len(group) < 3:
             return False
         temp = [tile[0] for tile in group]
@@ -169,6 +171,16 @@ class RummyModel:
             for tile in group:
                 if tile not in self.drawPile:
                     return False
+
+        if usePlayerStand:
+            player = self.getCurrentPlayer()
+            for tile in group:
+                if tile not in player:
+                    logging.error('Attempted to add a tile to the board that the player does not have: {}'.format(tile))
+                    return False
+                else:
+                    player.remove(tile)
+
 
         self.board['groups'].append(group)
         return True

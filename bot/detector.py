@@ -22,7 +22,7 @@ FRAME_INTERVAL = 40
 camera = cv2.VideoCapture(0)
 
 #Rummy model
-controller = None,None,None
+controller = None
 rummyBotSolutions = []
 currSolutionIndex = -1
 
