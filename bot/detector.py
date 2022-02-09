@@ -122,12 +122,12 @@ def endMove():
     global controller
     prev = RummyModel(controller.model)
     valid = controller.model.decodeJSON(request.data)
+    print('Player ended move. Board is{} valid'.format(' ' if valid else ' not'))
     if valid:
-        print('Validity {}'.format(valid))
         Timer(1.0, controller.nextPlayer).start()
         message = 'Next player'
     else:
-        message = 'Cannot end move, the board is not valid. Returning tiles '
+        message = 'Cannot end move, the board is not valid. Returning tiles'
         controller.setModel(prev)
     return {'valid': valid, 'message': message}
 

@@ -104,13 +104,13 @@ class RummyTestCase(unittest.TestCase):
     # Solver Tests
     def test_total_group_size(self):
         self.model.restart()
+        self.model.addRun([(1,1),(1,2),(1,3)])
         solver = RummySolver(self.model)
-        groupSize,solution = solver.totalGroupSize([(1,1),(1,1),(2,1),(2,1),(3,1),(3,1)],RummyModel())
-        self.assertEqual(6, groupSize)
-        self.assertEquals(len(solution.board["groups"]),2)
+        groupSize,solution = solver.totalGroupSize([(1,1),(1,1),(2,1),(2,1),(3,1)],self.model)
+        self.assertEqual(3, groupSize)
+        self.assertEquals(len(solution.board["groups"]),1)
         self.assertEqual(set(solution.board["groups"][0]),set([(1,1),(2,1),(3,1)]))
-        self.assertEqual(set(solution.board["groups"][1]),set([(1,1),(2,1),(3,1)]))
-        self.assertEquals(len(solution.board["runs"]),0)
+        self.assertEquals(len(solution.board["runs"]),1)
 
         groupSize,solution = solver.totalGroupSize([(1,1),(2,1),(3,1),(3,1)],RummyModel())
         self.assertEqual(3, groupSize)

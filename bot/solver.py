@@ -53,16 +53,23 @@ class RummySolver:
 
             groupScores,solution = self.totalGroupSize(new_hands[i],solution)
             groupScores = groupScores * value
+            logging.debug('~~~~~~~~~~~~~* DEBUG STRING *~~~~~~~~~~~\n'+debugStr+' \tgroupscores:{}\tsolution:\n{}\n'.format(groupScores,solution))
+            assert groupScores <= solution.getBoardScore()
 
+            # Check the table constraint with the previous model
             if solution.checkTableConstraint(self.model, value):
                 _, solution = self._maxScore(value + 1, new_runs[i], solution)
                 result = groupScores + run_scores[i] + solution.getBoardScore()
+                if runHash not in self.score[value - 1] or result > self.score[value - 1][runHash][0]:
+                    self.score[value - 1][runHash] = (result, solution)
             else:
-                result = 0
+                result = "0 (doesn't satisfy table constraint) "
+                self.score[value - 1][runHash] = (0, solution)
+
+            # Log the recursion
             debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores,result)
             logging.warning(debugStr)
-            if runHash not in self.score[value-1] or result > self.score[value-1][runHash][0]:
-                self.score[value-1][runHash] = (result,solution)
+
         return self.score[value-1][runHash]
 
 
@@ -131,7 +138,7 @@ class RummySolver:
 
     # (Destructive method) Updates the runs array with the given tile, and returns the score added
     # Also, keeps track of tiles used in the solution
-    def updateRun(self,runs,tile,M,solution):
+    def updateRun(self,runs,tile,M,solution:RummyModel):
         suit, value = tile
         runVal = runs[suit - 1, M]
         if runVal == 0:
@@ -152,20 +159,30 @@ class RummySolver:
             return value
 
     # Return the total group size that can be formed from the given 'hand'
-    def totalGroupSize(self,hand,solution):
-        noDuplicates = list(set(hand))
-        l1 = len(noDuplicates)
+    def totalGroupSize(self,hand,solution:RummyModel):
+        if len(hand)<3:
+            return 0, solution
+
+        # TODO: Generalize over 'm'
+        groups = [[],[]]
+        for tile in hand:
+            if isinstance(tile, list):
+                tile = (tile[0],tile[1])
+            if tile in groups[0]:
+                groups[1].append(tile)
+            else:
+                groups[0].append(tile)
+
+        l1 = len(groups[0])
+        l2 = len(groups[1])
         if l1 >= 3:
             lengroups = len(solution.board['groups'])
-            solution.addGroup(noDuplicates)
+            solution.addGroup(groups[0])
+            print(solution.board['groups'])
             assert lengroups+1 == len(solution.board['groups'])
-        for item in noDuplicates:
-            hand.remove(item)
 
-        l2 = len(hand)
         if l2 >= 3:
-            solution.addGroup(hand)
-            hand = []
+            solution.addGroup(groups[1])
         return ((l1 if l1 >= 3 else 0) + (l2 if l2 >= 3 else 0)) , solution
 
     @staticmethod

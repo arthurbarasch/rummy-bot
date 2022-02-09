@@ -58,8 +58,8 @@ def runRummyGame(solve=True):
     model = RummyModel()
     view = RummyView()
     controller = RummyController(model, view)
-    # controller.model.start()
-    controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])
+    controller.model.start()
+    #controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])
     if solve:
         # Insert example game states here
         print('Computing max score for current game state:')

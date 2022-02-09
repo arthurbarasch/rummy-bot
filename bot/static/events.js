@@ -1,7 +1,11 @@
+function httpGetError(){
+    console.log('ERROR: on http GET')
+}
+
 function updateGameState(){
     if(frameCount%20==1 && !boardModified && !solution){
         let url = '/game-state';
-        httpGet(url,'json',false,setGameState)
+        httpGet(url,'json',false,setGameState, httpGetError);
     }
 }
 

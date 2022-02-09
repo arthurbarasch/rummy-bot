@@ -188,13 +188,13 @@ class RummyModel:
         return True
 
 
-    def addRun(self, run):
+    def addRun(self, run, useDrawPile=False):
         if len(run) < 3:
             return False
         suit = run[0][0]
         value = 0
         for tile in run:
-            if tile not in self.drawPile:
+            if useDrawPile and tile not in self.drawPile:
                 return False
             if suit != tile[0]:
                 return False
@@ -255,23 +255,33 @@ class RummyModel:
         self.board["runs"] = []
         self.board["groups"] = []
         data = json.loads(data)
-        print(data)
-        set = []
+        logging.info('*======*\nClient data received: data')
         last = len(data["board"])
         if last >= 0 and data["board"][last-1] != '':
             data["board"].append('')
 
+        # Flag for removing double spaces between groups
+        newSet = True
+        set = []
         for tile in data['board']:
             # Empty string '' represents a break between sets in the frontend
             if tile != '':
                 # Frontend returns tiles as lists instead of tuple, make conversion
                 set.append((tile[0], tile[1]))
-            elif not self.addRun(set) and not self.addGroup(set):
+                newSet = False
+            elif newSet:
+                # Double space between sets returned from the frontend. Simply discard
+                continue
+            elif self.addRun(set) or self.addGroup(set):
                 # Try adding the set to the model as a run or group
-                # If neither is valid, return False (board invalid)
-                return False
-            else:
                 set = []
+                newSet = True
+            else:
+                # If neither is valid, return False (board invalid)
+                errMsg = 'ERROR: on decodeJSON:\n | Trying to add set: '+str(set)+'\n | Not a valid group or run\n'
+                logging.error(errMsg)
+                print(errMsg)
+                return False
 
         for i, tiles in enumerate(data['players']):
             # Frontend returns tiles as lists instead of tuple, make conversion
