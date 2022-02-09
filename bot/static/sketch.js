@@ -63,8 +63,7 @@ function draw() {
     displayBoardTiles();
   }
   displayPlayerTiles();
-
-  displayPlayerTurnIndicator();
+  displayMessages();
 }
 
 function displaySolution(){
@@ -82,7 +81,7 @@ function displaySolution(){
 function updateBoardScore(){
     boardScore = 0
     for(let tile of board){
-        if(tile != ''){
+        if(tile && tile != ''){
             boardScore+=tile[1]
         }
     }
@@ -141,22 +140,26 @@ function setGameState(state){
     lastPlayer = selectedPlayer
     selectedPlayer = state.playerTurn;
     if(selectedPlayer != lastPlayer){
-        displayPlayerTurnIndicator(100)
+        displayMessage("Player "+(selectedPlayer+1)+",\nit's your turn",1800)
     }
 
     players = state.players;
     updateBoardScore();
 }
 
-var turnIndicatorPhase = 0
-function displayPlayerTurnIndicator(ms){
-    let interval;
-    if(!ms && turnIndicatorPhase>0){
-        turnIndicatorPhase--;
-        rect(width/2, height/2, 300,90)
-        text("Player "+(selectedPlayer+1)+",\nit's your turn", width/2, height/2)
-    }else if(ms > 0){
-        turnIndicatorPhase = ms
+var messages = [];
+function displayMessage(message,ms){
+    messages.push([message, Date.now()+ms])
+}
+
+function displayMessages(){
+    if(messages.length>0){
+        if(messages[0][1]>Date.now()){
+            rect(width/2, height/2, 400+10*messages[0][0].length,90);
+            text(messages[0][0], width/2, height/2);
+        }else{
+            messages.splice(0,1);
+        }
     }
 }
 
@@ -206,7 +209,7 @@ function displayBoardTiles(){
 
 function drawTile(tile,pos){
     push();
-    if(tile==''){
+    if(!tile || tile==''){
         translate(pos.x*sizeX, pos.y*sizeY);
         fill(205,50)
         rect(0,0, sizeX, sizeY, 10);

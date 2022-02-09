@@ -125,9 +125,11 @@ def endMove():
     if valid:
         print('Validity {}'.format(valid))
         Timer(1.0, controller.nextPlayer).start()
+        message = 'Next player'
     else:
+        message = 'Cannot end move, the board is not valid. Returning tiles '
         controller.setModel(prev)
-    return {'valid': valid}
+    return {'valid': valid, 'message': message}
 
 @app.route('/restart', methods=['POST','GET'])
 def restart():
@@ -164,8 +166,8 @@ def nextSolution():
 def solve():
     global controller, rummyBotSolutions
     solver = RummySolver(controller.model)
-    score,solution = solver.maxScore()
-    return {'score':score, 'solution': solution.encodeJSON()}
+    score = solver.maxScore()
+    return {'score':score, 'solution': solver.solution.encodeJSON()}
 
 @app.route('/select-roi', methods=['POST','GET'])
 def selectROI():

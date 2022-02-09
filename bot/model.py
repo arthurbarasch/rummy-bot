@@ -2,8 +2,10 @@ import random
 import numpy as np
 import json
 import logging
+from bot.player import RummyPlayer
 
 # Variables
+
 NUM_PLAYERS = 2
 m = 2  # Number of copies of the full tile set (without jokers)
 j = 0  # Number of jokers
@@ -19,7 +21,7 @@ class RummyModel:
     def __init__(self,model=None):
         assert model is None or isinstance(model,RummyModel)
         self.board = {'runs': [], 'groups': []} if not model else {'runs': model.board["runs"][:], 'groups': model.board["groups"][:]}
-        self.players = [[] for i in range(NUM_PLAYERS)] if not model else model.players[:]
+        self.players = [RummyPlayer(i) for i in range(NUM_PLAYERS)] if not model else model.players[:]
         self.playerTurn = 0 if not model else model.playerTurn
         if not model:
             self.drawPile = []
@@ -212,16 +214,16 @@ class RummyModel:
 
     # Adds the input list of tiles to any runs available
     def addToRuns(self, tiles):
-        for tile in tiles:
-            tileInserted = False
-            for run in self.board['runs']:
-                if run[-1][1]+1 == tile[1] and run[-1][0] == tile[0]:
-                    tileInserted = True
-                    run.append(tile)
-                    break
-            if tileInserted == False:
-                logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
-                assert tileInserted == False
+        assert len(tiles)>0
+        for run in self.board['runs']:
+            if run[-1][1] + 1 == tiles[0][1] and run[-1][0] == tiles[0][0]:
+                for tile in tiles:
+                    if run[-1][1] + 1 == tile[1] and run[-1][0] == tile[0]:
+                        run.append(tile)
+                    else:
+                        logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
+                        assert False
+
 
     # Checks to see if all groups and runs on the board are valid
     # Remove invalid hands
@@ -245,19 +247,18 @@ class RummyModel:
     def encodeJSON(self):
         return json.dumps({
             'board':self.board,
-            'players':self.players,
+            'players':[p.tiles for p in self.players],
             'playerTurn':self.playerTurn
         })
 
     def decodeJSON(self, data):
         self.board["runs"] = []
         self.board["groups"] = []
-        self.players = []
         data = json.loads(data)
         print(data)
         set = []
         last = len(data["board"])
-        if last>=0 and data["board"][last-1] != '':
+        if last >= 0 and data["board"][last-1] != '':
             data["board"].append('')
 
         for tile in data['board']:
@@ -272,11 +273,10 @@ class RummyModel:
             else:
                 set = []
 
-        for player in data['players']:
-            self.players.append([])
-            for tile in player:
-                # Frontend returns tiles as lists instead of tuple, make conversion
-                self.players[-1].append((tile[0], tile[1]))
+        for i, tiles in enumerate(data['players']):
+            # Frontend returns tiles as lists instead of tuple, make conversion
+            self.players[i].clearTiles()
+            self.players[i].extend(tiles)
 
         assert len(self.players) == NUM_PLAYERS
         return True

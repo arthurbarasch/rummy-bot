@@ -55,9 +55,11 @@ function endPlayerMove(){
     httpPost(url,'json',postData,function(data){
         console.log('Board valid? ' +data.valid)
         if(data.valid == "true"){
-            boardModified = false;
             endMoveButton.addClass('disabled');
+        }else{
+            displayMessage(data.message, 3000);
         }
+        boardModified = false;
     })
 }
 

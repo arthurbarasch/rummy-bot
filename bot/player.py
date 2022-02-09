@@ -9,8 +9,14 @@ class RummyPlayer(dict):
         self.human = True if human else human
         return
 
+    def extend(self,tile):
+        self.tiles.extend(tile)
+
     def append(self,tile):
         self.tiles.append(tile)
+
+    def remove(self,tile):
+        self.tiles.remove(tile)
 
     def clearTiles(self):
         self.tiles = []

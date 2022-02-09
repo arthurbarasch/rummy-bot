@@ -24,12 +24,12 @@ class RummySolver:
                     continue
         return solutions
 
-    def _maxScore(self):
-        score, solution = self.maxScore()
+    def maxScore(self):
+        _, solution = self._maxScore()
         self.solution = solution
-        return score
+        return solution.getBoardScore()
 
-    def maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel()):
+    def _maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel()):
         # Base case
         if value > n:
             solution.validateBoard()
@@ -37,7 +37,7 @@ class RummySolver:
         runHash = self.getRunHash(runs)
         # Base case: memoization stored in 'score' array
         if runHash in self.score[value-1]:
-            logging.warning('\nreturn memoized val:{}\tscore lengths:{}'.format(self.score[value-1][runHash][0], list(map(lambda x: len(x), self.score)) ))
+            logging.warning('\nreturn memoized val:{}\tscore lengths:{}'.format(self.score[value-1][runHash][0], list(map(lambda x: len(x), self.score))))
             return self.score[value-1][runHash]
 
         logging.warning('\nSOLUTION:\n'+ str(solution))
@@ -47,22 +47,22 @@ class RummySolver:
         # Make runs
         new_runs,new_hands, run_scores,solutions = self.makeRuns(hand, runs, value, solution)
 
-        #Assertions about the length of the arrays
-        assert sum([len(new_runs),len(new_hands),len(run_scores),len(solutions)])/4 == len(new_runs)
-        assert len(new_runs) < (m+2) ** 4
-
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value,new_hands[i],run_scores[i])
-            groupScores = self.totalGroupSize(new_hands[i],solutions[i]) * value
-            if solutions[i].checkTableConstraint(self.model, value):
-                score, solutions[i] = self.maxScore(value + 1, new_runs[i], solutions[i])
-                result = groupScores + run_scores[i] + score
+            solution = solutions[i]
+
+            groupScores,solution = self.totalGroupSize(new_hands[i],solution)
+            groupScores = groupScores * value
+
+            if solution.checkTableConstraint(self.model, value):
+                _, solution = self._maxScore(value + 1, new_runs[i], solution)
+                result = groupScores + run_scores[i] + solution.getBoardScore()
             else:
                 result = 0
             debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores,result)
             logging.warning(debugStr)
             if runHash not in self.score[value-1] or result > self.score[value-1][runHash][0]:
-                self.score[value-1][runHash] = (result,solutions[i])
+                self.score[value-1][runHash] = (result,solution)
         return self.score[value-1][runHash]
 
 
@@ -79,7 +79,11 @@ class RummySolver:
         # makeNewRun - recursive function
         # For each suit, create or extend runs with available tiles
         self.makeNewRun(hand,np.array(runs),(1, value),RummyModel(solution),ret)
+
+        #Assertions about the length of the arrays returned
         assert len(ret['new_runs']) > 0
+        assert sum([len(ret['new_runs']),len(ret['new_hands']),len(ret['run_scores']),len(ret['solutions'])])/4 == len(ret['new_runs'])
+        assert len(ret['new_runs']) < (m+2) ** 4
         return ret['new_runs'],ret['new_hands'],ret['run_scores'],ret['solutions']
 
     def makeNewRun(self,hand,runs,searchTile,solution,ret,run_scores=0):
@@ -95,7 +99,6 @@ class RummySolver:
         tilesAvailable = hand.count(searchTile)
 
         if tilesAvailable == 0:
-            logging.warning("SKIP")
             self.makeNewRun(hand, runs,(suit + 1, value), solution, ret,run_scores)
             return
 
@@ -153,16 +156,17 @@ class RummySolver:
         noDuplicates = list(set(hand))
         l1 = len(noDuplicates)
         if l1 >= 3:
+            lengroups = len(solution.board['groups'])
             solution.addGroup(noDuplicates)
+            assert lengroups+1 == len(solution.board['groups'])
         for item in noDuplicates:
             hand.remove(item)
 
         l2 = len(hand)
-        print('L1 is {} and l2 is {}'.format(l1, l2))
         if l2 >= 3:
             solution.addGroup(hand)
             hand = []
-        return (l1 if l1 >= 3 else 0) + (l2 if l2 >= 3 else 0)
+        return ((l1 if l1 >= 3 else 0) + (l2 if l2 >= 3 else 0)) , solution
 
     @staticmethod
     def getRunHash(run):
