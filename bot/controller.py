@@ -59,6 +59,7 @@ def runRummyGame(solve=True):
     view = RummyView()
     controller = RummyController(model, view)
     controller.model.start()
+    controller.model.players[controller.botPlayer].extend([(1,9),(1,10),(1,11)])
     #controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])
     if solve:
         # Insert example game states here

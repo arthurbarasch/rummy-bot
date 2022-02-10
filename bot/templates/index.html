@@ -13,16 +13,16 @@
 </head>
 <body class="bg-dark text-white">
     <div class="container-fluid mt-0">
+        <h3 class="mt-4 text-white">RummyBot</h3>
         <div class="row">
-            <div class="col-md-5 col-12 p-2">
-                <h3 class="mt-4 text-white">RummyBot</h3>
-                <img src="{{ url_for('video_feed') }}">
-                <form class="form-group" id="controls-form" method="post">
-                    Canny Edge detection: <input type="range" min="30" max="250" value="100"  name="canny" id="canny">
-                    <input class="btn" type="submit" value="Save!" name="save" id="save">
-                </form>
-            </div>
-            <div class="col-md-7 col-12 p-3" id="canvas-container">
+<!--            <div class="col-md-5 col-12 p-2">-->
+<!--                <img src="{{ url_for('video_feed') }}">-->
+<!--                <form class="form-group" id="controls-form" method="post">-->
+<!--                    Canny Edge detection: <input type="range" min="30" max="250" value="100"  name="canny" id="canny">-->
+<!--                    <input class="btn" type="submit" value="Save!" name="save" id="save">-->
+<!--                </form>-->
+<!--            </div>-->
+            <div class="col-md-12 col-12 p-3 m-auto" id="canvas-container">
             </div>
         </div>
     </div>

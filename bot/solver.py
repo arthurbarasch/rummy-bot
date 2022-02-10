@@ -7,12 +7,18 @@ class RummySolver:
     def __init__(self, model: RummyModel):
         self.model = model
         self.score = []
+        self.counter = []
         for i in range(n):
             self.score.append(dict())
+            self.counter.append(0)
         self.solution = None
 
     def setModel(self, model: RummyModel):
         self.__init__(model)
+
+    def displayCounter(self):
+        for i,c in enumerate(self.counter):
+            print(str(i)+'. '+'*'*c)
 
     def traceSolution(self, runHash):
         solutions = []
@@ -27,9 +33,14 @@ class RummySolver:
     def maxScore(self):
         _, solution = self._maxScore()
         self.solution = solution
+        self.displayCounter()
         return solution.getBoardScore()
 
     def _maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel()):
+        # Recursion counter
+        if value<len(self.counter):
+            self.counter[value-1]+=1
+
         # Base case
         if value > n:
             solution.validateBoard()
@@ -178,7 +189,6 @@ class RummySolver:
         if l1 >= 3:
             lengroups = len(solution.board['groups'])
             solution.addGroup(groups[0])
-            print(solution.board['groups'])
             assert lengroups+1 == len(solution.board['groups'])
 
         if l2 >= 3:
