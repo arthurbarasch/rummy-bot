@@ -9,6 +9,31 @@ function updateGameState(){
     }
 }
 
+function setGameState(state){
+    board = [];
+    if(!state || !state.board) return
+    for(let run of state.board.runs){
+        board.push(...run)
+        board.push('')
+    }
+
+    for(let group of state.board.groups){
+        board.push(...group)
+        board.push('')
+    }
+
+    lastPlayer = selectedPlayer
+    selectedPlayer = state.playerTurn;
+    if(selectedPlayer != lastPlayer){
+        displayMessage("Player "+(selectedPlayer+1)+",\nit's your turn",1800)
+    }
+
+    players = state.players;
+    drawPileSize = state.drawPileSize
+    buttons[0].html('Draw tile<br>('+drawPileSize+')')
+    updateBoardScore();
+}
+
 function selectRoi(){
     let url = '/select-roi';
     httpGet(url,'json',false,function(data){

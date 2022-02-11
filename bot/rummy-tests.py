@@ -17,6 +17,7 @@ class RummyTestCase(unittest.TestCase):
 
     # Model Tests
     def test_draw_tile(self):
+        self.model.restart()
         before = self.model.drawPile[:]
         self.model.drawTile(0, 1)
         after = self.model.drawPile[:]

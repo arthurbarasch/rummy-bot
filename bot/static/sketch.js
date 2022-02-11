@@ -18,6 +18,7 @@ var solution;
 
 var board = [];
 var players = [[],[]];
+var drawPileSize = 0;
 var selectedPlayer = 0;
 var selectedTile;
 var boardModified = false;
@@ -89,6 +90,10 @@ function updateBoardScore(){
 
 function createControlButtons(){
   buttons = []
+  drawTileButton = createButton('Draw tile');
+  drawTileButton.mousePressed(drawRandomTile);
+  buttons.push(drawTileButton)
+
   endMoveButton = createButton('END MOVE');
   endMoveButton.mousePressed(endPlayerMove);
   endMoveButton.addClass('disabled');
@@ -103,17 +108,13 @@ function createControlButtons(){
   randomButton.mousePressed(addRandomHand);
   buttons.push(randomButton)
 
-  drawTileButton = createButton('Draw tile');
-  drawTileButton.mousePressed(drawRandomTile);
-  buttons.push(drawTileButton)
-
   solveButton = createButton('SOLVE');
   solveButton.mousePressed(solveTable);
   buttons.push(solveButton)
 
-  roiButton = createButton('Select Region of Interest (ROI)');
-  roiButton.mousePressed(selectRoi);
-  buttons.push(roiButton)
+//  roiButton = createButton('Select Region of Interest (ROI)');
+//  roiButton.mousePressed(selectRoi);
+//  buttons.push(roiButton)
 
   for(let b of buttons){
     b.parent('controls');
@@ -122,29 +123,6 @@ function createControlButtons(){
         solution = null;
     })
   }
-}
-
-function setGameState(state){
-    board = [];
-    if(!state || !state.board) return
-    for(let run of state.board.runs){
-        board.push(...run)
-        board.push('')
-    }
-
-    for(let group of state.board.groups){
-        board.push(...group)
-        board.push('')
-    }
-
-    lastPlayer = selectedPlayer
-    selectedPlayer = state.playerTurn;
-    if(selectedPlayer != lastPlayer){
-        displayMessage("Player "+(selectedPlayer+1)+",\nit's your turn",1800)
-    }
-
-    players = state.players;
-    updateBoardScore();
 }
 
 var messages = [];

@@ -9,6 +9,9 @@ class RummyPlayer(dict):
         self.human = True if human else human
         return
 
+    def getTilePool(self, filter_value=None):
+        return list(filter(lambda t: t[1] == filter_value, self.tiles)) if filter_value else self.tiles
+
     def extend(self,tile):
         self.tiles.extend(tile)
 

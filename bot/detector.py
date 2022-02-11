@@ -123,9 +123,14 @@ def endMove():
     prev = RummyModel(controller.model)
     valid = controller.model.decodeJSON(request.data)
     print('Player ended move. Board is{} valid'.format(' ' if valid else ' not'))
+    message = ''
     if valid:
-        Timer(1.0, controller.nextPlayer).start()
-        message = 'Next player'
+        if controller.model.getCurrentPlayer().quarantine and prev.getBoardScore()+30 <= controller.model.getBoardScore():
+            message = 'You need to place 30 points down in one round to exit quarantine'
+            controller.setModel(prev)
+        else:
+            Timer(1.0, controller.nextPlayer).start()
+            message = 'Next player'
     else:
         message = 'Cannot end move, the board is not valid. Returning tiles'
         controller.setModel(prev)

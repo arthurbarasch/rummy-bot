@@ -5,6 +5,8 @@ from flask import request, app
 import time
 from threading import Timer
 
+GAME_MODE = {'HUMAN vs. AI': 0,'AI vs. AI': 1}
+DELAY = 0.5
 
 class RummyController:
     def __init__(self, model:RummyModel, view:RummyView):
@@ -14,6 +16,9 @@ class RummyController:
         self.view = view
         self.solver = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS-1
+        self.gameMode = GAME_MODE['AI vs. AI']
+        if self.gameMode == GAME_MODE['AI vs. AI']:
+            self.nextPlayer()
 
     def setModel(self, model:RummyModel):
         self.__init__(model, self.view)
@@ -38,28 +43,28 @@ class RummyController:
 
     def nextPlayer(self):
         self.model.nextPlayer()
-        if self.model.playerTurn == self.botPlayer:
-            Timer(1.5, self.makeMoveBot).start()
+        if (self.gameMode == GAME_MODE['AI vs. AI'] or self.model.playerTurn == self.botPlayer) and not self.model.isGameOver():
+            Timer(1.5*DELAY, self.makeMoveBot).start()
 
     def makeMoveBot(self):
         prev_score = self.model.getBoardScore()
-        self.solver.setModel(self.model)
-        score = self.solver.maxScore()
+        self.solver = RummySolver(self.model)
+        score = self.solver.maxScore(quarantine=self.model.players[self.botPlayer].quarantine)
         if score != self.model.getBoardScore() and (score >= 30+prev_score or not self.model.players[self.botPlayer].quarantine):
             print('RummyBot making moves on the board\n')
             self.model.copySolution(self.solver.solution)
-            Timer(3.5, self.nextPlayer).start()
+            Timer(3.5*DELAY, self.nextPlayer).start()
         else:
             print('RummyBot making move: Drawing tile\n')
             self.model.drawTile(self.model.playerTurn)
-            Timer(1.8, self.nextPlayer).start()
+            Timer(2*DELAY, self.nextPlayer).start()
 
 def runRummyGame(solve=True):
     model = RummyModel()
     view = RummyView()
     controller = RummyController(model, view)
     controller.model.start()
-    controller.model.players[controller.botPlayer].extend([(1,9),(1,10),(1,11)])
+    #controller.model.players[controller.botPlayer].extend([(1,9),(1,10),(1,11)])
     #controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])
     if solve:
         # Insert example game states here
