@@ -159,7 +159,12 @@ class RummySolver:
     def updateRun(self, runs, tile, M, solution: RummyModel):
         suit, value = tile
         runVal = runs[suit - 1, M]
+
         if runVal == 0:
+            if value + 3 <= n:
+                # No need to start a new run if we know we can't finish it
+                return 0
+
             runs[suit - 1, M] += 1
             solution.initNewRun(tile)
             return 0
@@ -182,17 +187,24 @@ class RummySolver:
             return 0, solution
 
         # TODO: Generalize over 'm'
-        groups = [[], []]
-        for tile in hand:
-            if isinstance(tile, list):
-                tile = (tile[0], tile[1])
-            if tile in groups[0]:
-                groups[1].append(tile)
-            else:
-                groups[0].append(tile)
+        g1 = list(set(hand))
+        g2 = hand
+        for tile in g1:
+            g2.remove(tile)
 
+        #Special case for when a group has length 4 and the other length 2
+        if len(g1) == 4 and len(g2) ==2:
+            for t in g1:
+                if t not in g2:
+                    g1.remove(t)
+                    g2.append(t)
+                    break
+
+        groups = [g1, g2]
         l1 = len(groups[0])
         l2 = len(groups[1])
+
+
         if l1 >= 3:
             lengroups = len(solution.board['groups'])
             solution.addGroup(groups[0])

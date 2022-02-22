@@ -12,12 +12,13 @@ class RummyController:
     def __init__(self, model:RummyModel, view:RummyView):
         assert isinstance(model,RummyModel)
         assert isinstance(view,RummyView)
-        self.init(model, view)
 
-
-    def init(self, model:RummyModel, view:RummyView):
-        self.model = model
         self.view = view
+        self.init(model)
+
+
+    def init(self, model:RummyModel):
+        self.model = model
         self.solver = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS-1
         self.gameMode = GAME_MODE['HUMAN vs. AI']

@@ -54,6 +54,11 @@ class RummyTestCase(unittest.TestCase):
         temp = self.model.getTotalTilePool()
         self.assertEquals([(1, 5), (1, 10), (2, 10), (3, 10)], temp)
 
+        self.model.restart()
+        self.model.addGroup([(1, 10), (2, 10), (3, 10)])
+        temp = self.model.getTotalTilePool()
+        self.assertEquals([(1, 10), (2, 10), (3, 10)], temp)
+
     def test_restart(self):
         self.model.restart()
         self.assertEquals(len(self.model.board["runs"]), 0)
@@ -154,15 +159,14 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(len(new_runs), 3)
         self.assertEqual(new_hands, [[],[],[(2,4)]] )
         self.assertEqual(run_scores,[0,0,0])
-        self.assertEqual(len(solutions[0].board["runs"]),1)
 
 
         self.model.restart()
         self.model.addRun([ (1, 2), (1, 3)])
         self.model.getCurrentPlayer().append((1, 4))
         solver = RummySolver(self.model)
-        self.assertEqual(len(solver.solution.board["runs"]),1)
         self.assertEqual(9, solver.maxScore())
+        self.assertEqual(len(solver.solution.board["runs"]),1)
 
 
 
