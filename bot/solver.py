@@ -35,10 +35,10 @@ class RummySolver:
         return solutions
 
     def maxScore(self, quarantine=False):
-        _, solution = self._maxScore(quarantine=quarantine)
+        score, solution = self._maxScore(quarantine=quarantine)
         self.solution = solution
         self.displayCounters()
-        return solution.getBoardScore()
+        return score
 
     def _maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel(), quarantine=False):
         # Recursion counter
@@ -78,7 +78,7 @@ class RummySolver:
             assert groupScores <= newSolution.getBoardScore()
 
             # Check the table constraint with the previous model
-            if newSolution.checkTableConstraint(self.model, value):
+            if newSolution.checkTableConstraint(self.model, value) or quarantine:
                 score, newSolution = self._maxScore(value + 1, new_runs[i], newSolution)
                 result = groupScores + run_scores[i] + score
                 if runHash not in self.score[value - 1] or result > self.score[value - 1][runHash][0]:
@@ -92,8 +92,6 @@ class RummySolver:
             debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores, result)
             logging.warning(debugStr)
 
-
-        print(runHash)
         return self.score[value - 1][runHash]
 
     def makeRuns(self, hand, runs, value, solution: RummyModel):
@@ -104,7 +102,7 @@ class RummySolver:
                 searchTile = (suit, value)
                 if not searchTile in hand and runs[suit - 1, M] > 0:
                     runs[suit - 1, M] = 0
-                    solution.validateBoard(filter_suit=suit)
+                    #solution.validateBoard(filter_suit=suit)
 
         # makeNewRun - recursive function
         # For each suit, create or extend runs with available tiles
@@ -135,30 +133,27 @@ class RummySolver:
             return
 
         # Iterate over possibilities of creating/extending runs of the given suit, value.
-        # (m+1) because we must try tiles in each run individually, and also in both runs at once.
-        for M in range(m + 1):
-            if M + 1 > m and m == 2:
-                if tilesAvailable != m:
-                    break
-                else:
-                    new_runs = np.array(runs)
-                    new_score = 0
-                    new_solution = RummyModel(solution)
-                    for i in range(m):
-                        new_score += self.updateRun(new_runs, searchTile, i, new_solution)
-                    newHand = hand[:]
-                    newHand.remove((suit, value))
-                    newHand.remove((suit, value))
-                    # Recursion over suits
-                    self.makeNewRun(newHand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
-            else:
-                new_runs = np.array(runs)
-                new_score = self.updateRun(new_runs, searchTile, M, solution)
-                new_solution = RummyModel(solution)
-                newHand = hand[:]
-                newHand.remove((suit, value))
-                # Recursion over suits
-                self.makeNewRun(newHand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
+        # We must try tiles in each run individually
+        for M in range(m):
+            new_runs = np.array(runs)
+            new_score = self.updateRun(new_runs, searchTile, M, solution)
+            new_hand = hand[:]
+            new_hand.remove((suit, value))
+            # Recursion over suits
+            self.makeNewRun(new_hand, new_runs, (suit + 1, value), solution, ret, run_scores + new_score)
+
+        # Add a search branch where both tiles are played in runs (if available)
+        if tilesAvailable == m:
+            new_runs = np.array(runs)
+            new_score = 0
+            new_solution = RummyModel(solution)
+            for i in range(m):
+                new_score += self.updateRun(new_runs, searchTile, i, new_solution)
+            newHand = hand[:]
+            newHand.remove((suit, value))
+            newHand.remove((suit, value))
+            # Recursion over suits
+            self.makeNewRun(newHand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
 
         # An extra possibility of no tiles of this sort being used for runs
         self.makeNewRun(hand, runs, (suit + 1, value), solution, ret, run_scores)
@@ -206,6 +201,7 @@ class RummySolver:
         if l1 >= 3:
             lengroups = len(solution.board['groups'])
             solution.addGroup(groups[0])
+            print('10s GROUP:\n{}'.format(solution))
             if lengroups + 1 != len(solution.board['groups']):
                 logging.error('ERROR: on /solver.py/totalGroupSize > tried adding {} as a group'.format(groups[0]))
                 return 0, solution

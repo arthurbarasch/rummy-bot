@@ -44,13 +44,15 @@ class RummyModel:
 
         # self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
 
+    # Copy input solution model to this model, while removing the player tiles used
+    # and ensuring the draw pile is correct
     def copySolution(self, model):
         previous = RummyModel(self)
         self.board = model.board
         tiles = self.compareModels(previous)
-        logging.warning("Copying solution from board score {} to board score {} ({} player tiles used this round)".format(previous.getBoardScore(), self.getBoardScore(),len(tiles)))
         self.players[self.playerTurn] = tiles
         self.correctDrawPile()
+        logging.info("Copying solution from board score {} to board score {} ({} player tiles used this round)".format(previous.getBoardScore(), self.getBoardScore(),len(tiles)))
 
     # Makes sure that the draw pile has the correct tiles after a player makes a move.
     def correctDrawPile(self):
@@ -74,6 +76,8 @@ class RummyModel:
         for t in tiles:
             if t in player:
                 player.remove(t)
+            else:
+                logging.error('ERROR: while trying to compareModels in /model.py/copySolution: tile {} is not present on the player stand, but was played'.format(tile, m))
         return player
 
     def giveAllTilesToCurrentPlayer(self):

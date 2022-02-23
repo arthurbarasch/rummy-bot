@@ -16,7 +16,7 @@ class RummyController:
         self.view = view
         self.solver = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS-1
-        self.gameMode = GAME_MODE['AI vs. AI']
+        self.gameMode = GAME_MODE['HUMAN vs. AI']
         self.model.players[self.botPlayer].human = False
 
     def setModel(self, model:RummyModel):
@@ -64,11 +64,11 @@ class RummyController:
 def runRummyGame(solve=True):
     view = RummyView()
     model = RummyModel()
-    # model.players[controller.botPlayer].extend([(1,10),(2,10),(3,10)])
-    # model.getCurrentPlayer().extend([(1,13),(2,13),(3,13)])
+    model.players[1].extend([(1,10)])
+    model.getCurrentPlayer().extend([(1,10),(2,10),(3,10),(3,10)])
 
     controller = RummyController(model, view)
-    controller.model.start()
+    #controller.model.start()
     if solve:
         # Insert example game states here
         print('Computing max score for current game state:')

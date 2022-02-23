@@ -124,9 +124,10 @@ class RummyTestCase(unittest.TestCase):
     def test_make_runs(self):
         self.model.restart()
         self.model.addRun([(1, 1), (1, 2), (1, 3)])
+        self.model.addRun([(1, 1), (1, 2), (1, 3)])
         self.model.getCurrentPlayer().append((1, 4))
         solver = RummySolver(self.model)
-        self.assertEqual(10, solver.maxScore())
+        self.assertEqual(16, solver.maxScore())
 
         self.model.restart()
         self.model.addRun([(2, 4), (2, 5), (2, 6)])
@@ -147,7 +148,9 @@ class RummyTestCase(unittest.TestCase):
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
         self.model.getCurrentPlayer().append((3, 10))
         solver = RummySolver(self.model)
-        self.assertEqual(30, solver.maxScore(quarantine=False))
+        self.assertEqual(30, solver.maxScore())
+        self.assertEqual(len(solver.solution.board['groups']), 1)
+        self.assertEqual(set(solver.solution.board['groups'][0]), {(1, 10), (2, 10), (3, 10)} )
         self.assertEqual(len(solver.solution.getCurrentPlayer()), 1)
 
     def test_make_groups_and_runs(self):

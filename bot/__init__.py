@@ -6,7 +6,7 @@ import logging
 
 
 def main():
-    logging.basicConfig(filename='output/debug.log', filemode='w', level=logging.ERROR)
+    logging.basicConfig(filename='output/debug.log', filemode='w', level=logging.DEBUG)
     startLocalServer()
     return 0
 
