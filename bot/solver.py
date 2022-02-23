@@ -8,18 +8,20 @@ class RummySolver:
     def __init__(self, model: RummyModel):
         self.model = model
         self.score = []
-        self.counter = []
+        self.counters = []
         for i in range(n):
             self.score.append(dict())
-            self.counter.append(0)
+            self.counters.append({'recursions':0, 'memoization_prunes': 0,'tb_constraint_prunes': 0})
         self.solution = None
 
     def setModel(self, model: RummyModel):
         self.__init__(model)
 
-    def displayCounter(self):
-        for i, c in enumerate(self.counter):
-            print(str(i) + '. ' + '*' * c)
+    def displayCounters(self):
+        print('#+#+#+#+#+#+#+#+#+#+# RECURSION COUNTERS #+#+#+#+#+#+#+#+#+#+#')
+        print('Total number of recursive calls to MaxScore: {}'.format(sum([c['recursions'] for c in self.counters] )))
+        print('Total number of branches pruned due to memoization: {}'.format(sum([c['memoization_prunes'] for c in self.counters] )))
+        print('Total number of branches pruned due to table constraint not satisfied: {}\n\n'.format(sum([c['tb_constraint_prunes'] for c in self.counters] )))
 
     def traceSolution(self, runHash):
         solutions = []
@@ -34,13 +36,13 @@ class RummySolver:
     def maxScore(self, quarantine=False):
         _, solution = self._maxScore(quarantine=quarantine)
         self.solution = solution
-        self.displayCounter()
+        self.displayCounters()
         return solution.getBoardScore()
 
     def _maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel(), quarantine=False):
         # Recursion counter
-        if value < len(self.counter):
-            self.counter[value - 1] += 1
+        if (value-1) < len(self.counters):
+            self.counters[value - 1]['recursions'] += 1
 
         # Base case
         if value > n:
@@ -51,6 +53,8 @@ class RummySolver:
         if runHash in self.score[value - 1]:
             logging.warning('\nreturn memoized val:{}\tscore lengths:{}'.format(self.score[value - 1][runHash][0], list(
                 map(lambda x: len(x), self.score))))
+
+            self.counters[value - 1]['memoization_prunes'] += 1
             return self.score[value - 1][runHash]
 
         logging.warning('\nSOLUTION:\n' + str(solution))
@@ -81,6 +85,7 @@ class RummySolver:
                 if runHash not in self.score[value - 1] or result > self.score[value - 1][runHash][0]:
                     self.score[value - 1][runHash] = (result, solution)
             else:
+                self.counters[value - 1]['tb_constraint_prunes'] += 1
                 result = "0 (doesn't satisfy table constraint) "
                 self.score[value - 1][runHash] = (0, solution)
 

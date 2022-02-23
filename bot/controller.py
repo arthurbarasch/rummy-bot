@@ -17,8 +17,7 @@ class RummyController:
         self.solver = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS-1
         self.gameMode = GAME_MODE['AI vs. AI']
-        if self.gameMode == GAME_MODE['AI vs. AI']:
-            self.nextPlayer()
+        self.model.players[self.botPlayer].human = False
 
     def setModel(self, model:RummyModel):
         self.__init__(model, self.view)
@@ -42,15 +41,18 @@ class RummyController:
         return self.solver.maxScore()
 
     def nextPlayer(self):
+        if self.model.isGameOver():
+            return True
         self.model.nextPlayer()
-        if (self.gameMode == GAME_MODE['AI vs. AI'] or self.model.playerTurn == self.botPlayer) and not self.model.isGameOver():
+        if (self.gameMode == GAME_MODE['AI vs. AI'] or self.model.playerTurn == self.botPlayer):
             Timer(1.5*DELAY, self.makeMoveBot).start()
 
     def makeMoveBot(self):
         prev_score = self.model.getBoardScore()
         self.solver = RummySolver(self.model)
-        score = self.solver.maxScore(quarantine=self.model.players[self.botPlayer].quarantine)
-        if score != self.model.getBoardScore() and (score >= 30+prev_score or not self.model.players[self.botPlayer].quarantine):
+        score = self.solver.maxScore(quarantine=self.model.players[self.model.playerTurn].quarantine)
+        if score != self.model.getBoardScore() and (score >= 30+prev_score or not self.model.players[self.model.playerTurn].quarantine):
+            self.model.players[self.model.playerTurn].quarantine = False
             print('RummyBot making moves on the board\n')
             self.model.copySolution(self.solver.solution)
             Timer(3.5*DELAY, self.nextPlayer).start()
@@ -60,12 +62,13 @@ class RummyController:
             Timer(2*DELAY, self.nextPlayer).start()
 
 def runRummyGame(solve=True):
-    model = RummyModel()
     view = RummyView()
+    model = RummyModel()
+    # model.players[controller.botPlayer].extend([(1,10),(2,10),(3,10)])
+    # model.getCurrentPlayer().extend([(1,13),(2,13),(3,13)])
+
     controller = RummyController(model, view)
     controller.model.start()
-    #controller.model.players[controller.botPlayer].extend([(1,9),(1,10),(1,11)])
-    #controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])
     if solve:
         # Insert example game states here
         print('Computing max score for current game state:')

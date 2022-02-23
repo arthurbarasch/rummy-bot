@@ -12,6 +12,19 @@ function updateGameState(){
 function setGameState(state){
     board = [];
     if(!state || !state.board) return
+
+    if(state.gameOver && !solution){
+        messages = []
+        gameOver = state.gameOver;
+        let m = 'Game over!\n';
+        if(gameOver == false){
+            m += 'Draw pile is empty';
+        }else{
+            m+='Player '+ gameOver+' won!'
+        }
+        displayMessage(m,6000);
+    }
+
     for(let run of state.board.runs){
         board.push(...run)
         board.push('')
@@ -71,6 +84,7 @@ function addRandomHand(){
 
 function restartBoard(){
     let url = '/restart';
+    messages = [];
     httpGet(url,'json',false,function(){
         print("Board restart");
         boardModified = false;

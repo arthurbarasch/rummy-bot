@@ -21,7 +21,7 @@ class RummyModel:
     def __init__(self,model=None):
         assert model is None or isinstance(model,RummyModel)
         self.board = {'runs': [], 'groups': []} if not model else {'runs': model.board["runs"][:], 'groups': model.board["groups"][:]}
-        self.players = [RummyPlayer(i) for i in range(NUM_PLAYERS)] if not model else model.players[:]
+        self.players = [RummyPlayer(i) for i in range(NUM_PLAYERS)] if not model else [RummyPlayer(p.playerNr, player=p) for p in model.players]
         self.playerTurn = 0 if not model else model.playerTurn
         if not model:
             self.generateDrawPile()
@@ -153,13 +153,18 @@ class RummyModel:
                 temp.remove(tile)
         return len(temp) == 0
 
-
+    # Check to see if the game is over
+    # Returns -1 if it isn't
+    # Returns the player number that won if someone finished their tiles
+    # Returns 0 if the game ended in a 'draw' (no more tiles to be drawn from the draw pile)
     def isGameOver(self):
+        for i, p in enumerate(self.players):
+            if len(p.tiles) == 0:
+                logging.info('Game over! Player {} won'.format(i+1))
+                return i+1
+
         if self.drawPile == 0:
             return True
-        for p in self.players:
-            if (len(p) == 0):
-                return True
         return False
 
     # Add a random group or run to the board (given available tiles on the draw pile)
@@ -266,12 +271,18 @@ class RummyModel:
 
     # Encode current state
     def encodeJSON(self):
-        return json.dumps({
+        obj = {
             'board':self.board,
             'players':[p.tiles for p in self.players],
             'playerTurn':self.playerTurn,
             'drawPileSize': len(self.drawPile)
-        })
+        }
+
+        gameOver = self.isGameOver()
+        if gameOver>0:
+            obj['gameOver'] = gameOver
+            print(obj)
+        return json.dumps(obj)
 
     def decodeJSON(self, data):
         self.board["runs"] = []

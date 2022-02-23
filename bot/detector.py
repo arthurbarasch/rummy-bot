@@ -13,6 +13,7 @@ import pytesseract as tess
 from bot.controller import runRummyGame
 from bot.solver import RummySolver
 from bot.model import RummyModel
+import json
 
 #Initialize the Flask app
 app = Flask(__name__)
@@ -110,9 +111,7 @@ def sendGameState():
     global currSolutionIndex
     global rummyBotSolutions
 
-    if controller.model:
-        if currSolutionIndex>=0 and currSolutionIndex<len(rummyBotSolutions):
-            return rummyBotSolutions[currSolutionIndex].encodeJSON()
+    if controller and controller.model:
         return controller.model.encodeJSON()
     else:
         return {}
@@ -125,10 +124,11 @@ def endMove():
     print('Player ended move. Board is{} valid'.format(' ' if valid else ' not'))
     message = ''
     if valid:
-        if controller.model.getCurrentPlayer().quarantine and prev.getBoardScore()+30 <= controller.model.getBoardScore():
+        if controller.model.getCurrentPlayer().quarantine and controller.model.getBoardScore() < prev.getBoardScore()+30:
             message = 'You need to place 30 points down in one round to exit quarantine'
             controller.setModel(prev)
         else:
+            controller.model.getCurrentPlayer().quarantine = False
             Timer(1.0, controller.nextPlayer).start()
             message = 'Next player'
     else:
@@ -170,9 +170,15 @@ def nextSolution():
 @app.route('/solve', methods=['POST','GET'])
 def solve():
     global controller, rummyBotSolutions
-    solver = RummySolver(controller.model)
-    score = solver.maxScore()
-    return {'score':score, 'solution': solver.solution.encodeJSON()}
+    if controller and controller.model:
+        solver = RummySolver(controller.model)
+        score = solver.maxScore()
+
+        temp = RummyModel(controller.model)
+        temp.copySolution(solver.solution)
+        return {'score':score, 'solution': temp.encodeJSON()}
+    else:
+        return {}
 
 @app.route('/select-roi', methods=['POST','GET'])
 def selectROI():

@@ -2,12 +2,18 @@ import logging
 
 
 class RummyPlayer(dict):
-    def __init__(self, playerNr,human=None, tiles=None):
-        self.playerNr = playerNr
-        self.tiles = [] if tiles is None else tiles[:]
-        self.quarantine = True
-        self.human = True if human else human
-        return
+    def __init__(self, playerNr,human=None, tiles=None ,player=None):
+        if player is None:
+            self.playerNr = playerNr
+            self.tiles = [] if tiles is None else tiles[:]
+            self.quarantine = True
+            self.human = True if human else human
+        else:
+            self.playerNr = player.playerNr
+            self.tiles = player.tiles[:]
+            self.quarantine = player.quarantine
+            self.human = player.human
+
 
     def getTilePool(self, filter_value=None):
         return list(filter(lambda t: t[1] == filter_value, self.tiles)) if filter_value else self.tiles

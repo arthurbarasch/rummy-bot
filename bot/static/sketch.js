@@ -22,6 +22,7 @@ var drawPileSize = 0;
 var selectedPlayer = 0;
 var selectedTile;
 var boardModified = false;
+var gameOver = false;
 
 
 //Buttons
