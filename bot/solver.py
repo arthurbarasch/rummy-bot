@@ -103,7 +103,8 @@ class RummySolver:
 
     def maxScore(self, quarantine=False):
         score, solution = self._maxScore(quarantine=quarantine)
-        self.solution = solution
+        self.solution = self.model
+        self.solution.copySolution(solution)
         if not self.test_mode:
             self.displayCounters()
         return score
@@ -195,7 +196,7 @@ class RummySolver:
             ret['new_runs'].append(np.array(runs))
             ret['new_hands'].append(hand[:])
             ret['run_scores'].append(run_scores)
-            ret['solutions'].append(RummyModel(solution))
+            ret['solutions'].append(solution)
             return
 
         # TODO: Check for performance
