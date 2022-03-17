@@ -77,7 +77,7 @@ class RummyModel:
             if t in player:
                 player.remove(t)
             else:
-                logging.error('ERROR: while trying to compareModels in /model.py/copySolution: tile {} is not present on the player stand, but was played'.format(tile, m))
+                logging.error('ERROR: while trying to compareModels in /model.py/copySolution: tile {} is not present on the player stand, but was played'.format(t))
         return player
 
     def giveAllTilesToCurrentPlayer(self):
@@ -137,6 +137,7 @@ class RummyModel:
             return list(filter(lambda tile: tile[1] == filter_value, temp))
         else:
             return sorted(temp,key=lambda tile: tile[1])
+
 
     # Return the tile pool which is defined to be the board + all player tiles
     # a.k.a all tiles except draw pile

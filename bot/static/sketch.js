@@ -29,7 +29,8 @@ var gameOver = false;
 var buttons = [];
 
 function setup() {
-  let cnv = createCanvas(windowWidth*0.55, 550);
+
+  let cnv = createCanvas(document.getElementById('canvas-container').clientWidth, 550);
   cnv.parent('canvas-container')
   createControlButtons();
 
@@ -54,8 +55,8 @@ function draw() {
   fill(0)
 
   text('Player '+(selectedPlayer+1),width-50, height-PLAYER_ROWS*sizeY-10)
-  text('Max score (RummyBot): '+currMaxScore,150, height-PLAYER_ROWS*sizeY-10)
-  text('Score on the board: '+boardScore,125, height-PLAYER_ROWS*sizeY-50)
+//  text('Max score (RummyBot): '+currMaxScore,150, height-PLAYER_ROWS*sizeY-10)
+//  text('Score on the board: '+boardScore,125, height-PLAYER_ROWS*sizeY-50)
   pop();
 
   // Display tiles
@@ -91,6 +92,12 @@ function updateBoardScore(){
 
 function createControlButtons(){
   buttons = []
+
+  restartButton = createButton('NEW GAME');
+  restartButton.addClass('btn-green')
+  restartButton.mousePressed(restartBoard);
+  buttons.push(restartButton)
+
   drawTileButton = createButton('Draw tile');
   drawTileButton.mousePressed(drawRandomTile);
   buttons.push(drawTileButton)

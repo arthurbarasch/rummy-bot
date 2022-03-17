@@ -1,26 +1,22 @@
-from bot.view import RummyView
 from bot.model import *
 from bot.solver import RummySolver
-from flask import request, app
 import time
 from threading import Timer
 
 GAME_MODE = {'HUMAN vs. AI': 0,'AI vs. AI': 1}
-DELAY = 0.5
+DELAY = 0.4
 
 class RummyController:
-    def __init__(self, model:RummyModel, view:RummyView):
-        assert isinstance(model,RummyModel)
-        assert isinstance(view,RummyView)
-        self.model = model
-        self.view = view
-        self.solver = RummySolver(self.model)
-        self.botPlayer = NUM_PLAYERS-1
-        self.gameMode = GAME_MODE['HUMAN vs. AI']
-        self.model.players[self.botPlayer].human = False
+    def __init__(self, model:RummyModel):
+        self.setModel(model)
 
     def setModel(self, model:RummyModel):
-        self.__init__(model, self.view)
+        assert isinstance(model,RummyModel)
+        self.model = model
+        self.solver = RummySolver(self.model)
+        self.botPlayer = NUM_PLAYERS-1
+        self.gameMode = GAME_MODE['AI vs. AI']
+        self.model.players[self.botPlayer].human = False
 
 
     def promptAction(self):
@@ -43,15 +39,15 @@ class RummyController:
     def nextPlayer(self):
         if self.model.isGameOver():
             return True
-        self.model.nextPlayer()
         if (self.gameMode == GAME_MODE['AI vs. AI'] or self.model.playerTurn == self.botPlayer):
             Timer(1.5*DELAY, self.makeMoveBot).start()
+        self.model.nextPlayer()
 
     def makeMoveBot(self):
         prev_score = self.model.getBoardScore()
-        self.solver = RummySolver(self.model)
-        score = self.solver.maxScore(quarantine=self.model.players[self.model.playerTurn].quarantine)
-        if score != self.model.getBoardScore() and (score >= 30+prev_score or not self.model.players[self.model.playerTurn].quarantine):
+        self.solver.setModel(self.model)
+        score = self.solver.maxScore(quarantine=False)
+        if score > prev_score and (score >= 30+prev_score or not self.model.players[self.model.playerTurn].quarantine):
             self.model.players[self.model.playerTurn].quarantine = False
             print('RummyBot making moves on the board\n')
             self.model.copySolution(self.solver.solution)
@@ -62,13 +58,10 @@ class RummyController:
             Timer(2*DELAY, self.nextPlayer).start()
 
 def runRummyGame(solve=True):
-    view = RummyView()
     model = RummyModel()
-    model.players[1].extend([(1,10)])
-    model.getCurrentPlayer().extend([(1,10),(2,10),(3,10),(3,10)])
-
-    controller = RummyController(model, view)
-    #controller.model.start()
+    controller = RummyController(model)
+    controller.model.start()
+    controller.model.players[0].extend([(1, 10), (2, 10), (3, 10)])
     if solve:
         # Insert example game states here
         print('Computing max score for current game state:')

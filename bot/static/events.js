@@ -43,7 +43,7 @@ function setGameState(state){
 
     players = state.players;
     drawPileSize = state.drawPileSize
-    buttons[0].html('Draw tile<br>('+drawPileSize+')')
+    buttons[1].html('Draw tile ('+drawPileSize+')')
     updateBoardScore();
 }
 

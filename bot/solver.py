@@ -2,27 +2,94 @@ from bot.model import m, n, k, RummyModel, K
 import math
 import logging
 import numpy as np
-
+import matplotlib.pyplot as plt
+import matplotlib
+import time
 
 class RummySolver:
-    def __init__(self, model: RummyModel):
-        self.model = model
-        self.score = []
-        self.counters = []
-        for i in range(n):
-            self.score.append(dict())
-            self.counters.append({'recursions':0, 'memoization_prunes': 0,'tb_constraint_prunes': 0})
-        self.solution = None
+    def __init__(self, model: RummyModel, test_mode = False):
+        self.setModel(model)
+        self.test_mode = test_mode
 
     def setModel(self, model: RummyModel):
-        self.__init__(model)
+        self.model = model
+        self.counters = {'recursions':np.zeros(n), 'memoization_prunes': np.zeros(n),'tb_constraint_prunes': np.zeros(n)}
+        self.score = []
+        for i in range(n):
+            self.score.append(dict())
+        self.solution = None
+
+    # Collects data over multiple runs of MaxScore with different parameters.
+    # Output's graph's of collected data to /output/fig.png
+    def outputGraphs(self):
+        assert False # Ensure assertions are disabled for optimizing running MaxScore
+        n_repetitions = 100 # Number of repetitions per run. Results are averaged accross repetitions
+        x_range = np.arange(10,40,4)
+        recursions = []
+        scores = []
+        exec_times = []
+        for i, handSize in enumerate(x_range):
+            recursion, score, exec_time = np.zeros(n_repetitions),np.zeros(n_repetitions),np.zeros(n_repetitions)
+            for rep in range(n_repetitions):
+                model = RummyModel()
+                model.drawTile(0,handSize)
+                self.setModel(model)
+                start = time.time()
+                score[rep] = self.maxScore(quarantine=False)
+                exec_time[rep] = time.time()-start
+                recursion[rep] = sum(self.counters.get('recursions'))
+                progress = math.floor(((n_repetitions*i)+rep)/(len(x_range)*n_repetitions)*100)
+                print('{}/{} {} {}%'.format((n_repetitions*i)+rep, len(x_range)*n_repetitions, '*'*progress, progress))
+            recursions.append(np.median(recursion))
+            exec_times.append(np.median(exec_time))
+            scores.append(np.median(score))
+
+        fig, axs = plt.subplots(3,1,figsize=(18, 22))
+        ax = axs[0]
+        ax.set_title('RummySolver efficiency')
+        y_range = scores
+        ax.plot(x_range,y_range)
+        ax.plot(x_range,[30]*len(x_range), '--', color='red', label="Quarantine threshold")
+        ax.legend()
+        ax.set_xlabel('Hand size')
+        ax.set_ylabel('Score')
+
+        ax = axs[1]
+        ax.set_title('RummySolver states')
+        y_range = recursions
+        ax.plot(x_range,y_range,color='orange')
+        ax.set_xlabel('Hand size')
+        ax.set_ylabel('# of states generated')
+
+        ax = axs[2]
+        ax.set_title('RummySolver performance')
+        y_range = exec_times
+        ax.plot(x_range,y_range,color='orange')
+        ax.set_xlabel('Hand size')
+        ax.set_ylabel('Execution time (s)')
+        # plt.rcParams.update({
+        #     "font.family": "serif",  # use serif/main font for text elements
+        #     "text.usetex": True,  # use inline math for ticks
+        #     "pgf.texsystem":'lualatex',
+        #     "pgf.rcfonts": False,  # don't setup fonts from rc parameters
+        #     "pgf.preamble": "\n".join([
+        #         r"\usepackage{url}",  # load additional packages
+        #         r"\usepackage{unicode-math}",  # unicode math setup
+        #         r"\setmainfont{DejaVu Serif}",  # serif font via preamble
+        #     ])
+        # })
+        plt.savefig('output/fig.pdf') #, backend='pgf') # Use pgf backend for outputting graphs styled for LaTex https://matplotlib.org/stable/tutorials/text/pgf.html
 
     def displayCounters(self):
         print('#+#+#+#+#+#+#+#+#+#+# RECURSION COUNTERS #+#+#+#+#+#+#+#+#+#+#')
-        print('Total number of recursive calls to MaxScore: {}'.format(sum([c['recursions'] for c in self.counters] )))
-        print('Total number of branches pruned due to memoization: {}'.format(sum([c['memoization_prunes'] for c in self.counters] )))
-        print('Total number of branches pruned due to table constraint not satisfied: {}\n\n'.format(sum([c['tb_constraint_prunes'] for c in self.counters] )))
+        print('Total number of recursive calls to MaxScore: {}'.format(sum(self.counters.get('recursions'))))
+        print('Total number of branches pruned due to memoization: {}'.format(sum(self.counters.get('memoization_prunes'))))
+        print('Total number of branches pruned due to table constraint not satisfied: {}\n\n'.format(sum(self.counters.get('tb_constraint_prunes'))))
         print('Final score array:\n{}'.format(str(self.score)))
+        print('Solution:\n{}'.format(self.solution.getBoardTilePool()))
+        # for i, s in enumerate(self.score):
+        #     for item in s:
+        #         print('{}. (runHash={}) {}'.format(i,item, s[item][1].getBoardTilePool()))
 
     def traceSolution(self, runHash):
         solutions = []
@@ -37,13 +104,14 @@ class RummySolver:
     def maxScore(self, quarantine=False):
         score, solution = self._maxScore(quarantine=quarantine)
         self.solution = solution
-        self.displayCounters()
+        if not self.test_mode:
+            self.displayCounters()
         return score
 
     def _maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel(), quarantine=False):
         # Recursion counter
         if (value-1) < len(self.counters):
-            self.counters[value - 1]['recursions'] += 1
+            self.counters['recursions'][value - 1] += 1
 
         # Base case
         if value > n:
@@ -55,7 +123,7 @@ class RummySolver:
             logging.warning('\nreturn memoized val:{}\tscore lengths:{}'.format(self.score[value - 1][runHash][0], list(
                 map(lambda x: len(x), self.score))))
 
-            self.counters[value - 1]['memoization_prunes'] += 1
+            self.counters['memoization_prunes'][value - 1] += 1
             return self.score[value - 1][runHash]
 
         logging.warning('\nSOLUTION:\n' + str(solution))
@@ -69,40 +137,45 @@ class RummySolver:
         new_runs, new_hands, run_scores, solutions = self.makeRuns(hand, runs, value, solution)
 
         for i in range(len(new_runs)):
-            debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value, new_hands[i], run_scores[i])
-            groupScores, newSolution = self.totalGroupSize(new_hands[i], solutions[i])
+            #debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value, new_hands[i], run_scores[i])
+            groupScores, solutions[i] = self.totalGroupSize(new_hands[i], solutions[i])
+            # found = ''
+            # if groupScores == 3:
+            #     found = 'IN VALUE {} FOUND GROUP:\n{}\n'.format(value,solutions[i])
             groupScores = groupScores * value
-            logging.debug(
-                '~~~~~~~~~~~~~* DEBUG STRING *~~~~~~~~~~~\n' + debugStr + ' \tgroupscores:{}\tsolution:\n{}\n'.format(
-                    groupScores, solution))
-            assert groupScores <= newSolution.getBoardScore()
+            # logging.debug(
+            #     '~~~~~~~~~~~~~* DEBUG STRING *~~~~~~~~~~~\n' + debugStr + ' \tgroupscores:{}\tsolution:\n{}\n'.format(
+            #         groupScores, solutions[i]))
+            # assert groupScores <= solutions[i].getBoardScore()
 
-            # Check the table constraint with the previous model
-            if newSolution.checkTableConstraint(self.model, value) or quarantine:
-                score, newSolution = self._maxScore(value + 1, new_runs[i], newSolution)
+            # Check the table constraint with the previous model, unless player is in quarantine
+            if quarantine or solutions[i].checkTableConstraint(self.model, value):
+                score, solutions[i] = self._maxScore(value + 1, new_runs[i], solutions[i],quarantine)
+                # if found != '':
+                #     found += 'SCORE AFTER RECURSION:{}\n'.format(score)
+                #     found+='SOLUTION AFTER RECURSION:\n{}\n'.format(solutions[i])
                 result = groupScores + run_scores[i] + score
                 if runHash not in self.score[value - 1] or result > self.score[value - 1][runHash][0]:
-                    self.score[value - 1][runHash] = (result, RummyModel(newSolution))
+                    # if result == 30 and runHash in self.score[value - 1]:
+                    #     print('FOUND 30')
+                    #     print(found+str(self.score[value - 1][runHash][0]))
+                    # if found != '':
+                    #     print(found+'FINAL SOLUTION:\n{}\n\n'.format(solutions[i]))
+                    self.score[value - 1][runHash] = (result, RummyModel(solutions[i]))
             else:
-                self.counters[value - 1]['tb_constraint_prunes'] += 1
+                self.counters['tb_constraint_prunes'][value - 1] += 1
                 result = "0 (doesn't satisfy table constraint) "
-                self.score[value - 1][runHash] = (0, RummyModel(newSolution))
+                if runHash not in self.score[value - 1]:
+                    self.score[value - 1][runHash] = (0, RummyModel(solution))
 
             # Log the recursion
-            debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores, result)
-            logging.warning(debugStr)
+            # debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores, result)
+            # logging.warning(debugStr)
 
         return self.score[value - 1][runHash]
 
     def makeRuns(self, hand, runs, value, solution: RummyModel):
         ret = {'new_runs': [], 'new_hands': [], 'run_scores': [], "solutions": []}
-        # Finish runs that cannot be continued (due to lack of tiles)
-        for suit in K:
-            for M in range(m):
-                searchTile = (suit, value)
-                if not searchTile in hand and runs[suit - 1, M] > 0:
-                    runs[suit - 1, M] = 0
-                    #solution.validateBoard(filter_suit=suit)
 
         # makeNewRun - recursive function
         # For each suit, create or extend runs with available tiles
@@ -129,18 +202,28 @@ class RummySolver:
         tilesAvailable = hand.count(searchTile)
 
         if tilesAvailable == 0:
+            if runs[suit-1][0]>0 or runs[suit-1][1]>0 :
+                solution.validateBoard(filter_suit=suit) # Clear board of unfinished runs
+                runs[suit-1][0] = 0 # Reset run values
+                runs[suit-1][1] = 0
             self.makeNewRun(hand, runs, (suit + 1, value), solution, ret, run_scores)
             return
+
+
+
+        # An extra possibility of no tiles of this sort being used for runs
+        self.makeNewRun(hand, runs, (suit + 1, value), solution, ret, run_scores)
 
         # Iterate over possibilities of creating/extending runs of the given suit, value.
         # We must try tiles in each run individually
         for M in range(m):
             new_runs = np.array(runs)
-            new_score = self.updateRun(new_runs, searchTile, M, solution)
+            new_solution = RummyModel(solution)
+            new_score = self.updateRun(new_runs, searchTile, M, new_solution)
             new_hand = hand[:]
             new_hand.remove((suit, value))
             # Recursion over suits
-            self.makeNewRun(new_hand, new_runs, (suit + 1, value), solution, ret, run_scores + new_score)
+            self.makeNewRun(new_hand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
 
         # Add a search branch where both tiles are played in runs (if available)
         if tilesAvailable == m:
@@ -154,9 +237,6 @@ class RummySolver:
             newHand.remove((suit, value))
             # Recursion over suits
             self.makeNewRun(newHand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
-
-        # An extra possibility of no tiles of this sort being used for runs
-        self.makeNewRun(hand, runs, (suit + 1, value), solution, ret, run_scores)
         return
 
     # (Destructive method) Updates the runs array with the given tile, and returns the score added
@@ -201,7 +281,6 @@ class RummySolver:
         if l1 >= 3:
             lengroups = len(solution.board['groups'])
             solution.addGroup(groups[0])
-            print('10s GROUP:\n{}'.format(solution))
             if lengroups + 1 != len(solution.board['groups']):
                 logging.error('ERROR: on /solver.py/totalGroupSize > tried adding {} as a group'.format(groups[0]))
                 return 0, solution
