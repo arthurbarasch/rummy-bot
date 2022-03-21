@@ -50,7 +50,7 @@ class RummyModel:
         previous = RummyModel(self)
         self.board = model.board
         tiles = self.compareModels(previous)
-        self.players[self.playerTurn] = tiles
+        self.players[self.playerTurn].setTiles(tiles)
         self.correctDrawPile()
         logging.info("Copying solution from board score {} to board score {} ({} player tiles used this round)".format(previous.getBoardScore(), self.getBoardScore(),len(tiles)))
 
@@ -66,19 +66,19 @@ class RummyModel:
 
     # Compares current model with input model to determine tiles not present on the intersections of board sets.
     # Return the updated player tiles
-    def compareModels(self, model):
+    def compareModels(self, previous):
         tiles = self.getBoardTilePool()
-        for tile in model.getBoardTilePool():
+        for tile in previous.getBoardTilePool():
             if tile in tiles:
                 tiles.remove(tile)
 
-        player = model.getCurrentPlayer()
+        player = previous.getCurrentPlayer()
         for t in tiles:
             if t in player:
                 player.remove(t)
             else:
                 logging.error('ERROR: while trying to compareModels in /model.py/copySolution: tile {} is not present on the player stand, but was played'.format(t))
-        return player
+        return player.tiles
 
     def giveAllTilesToCurrentPlayer(self):
         self.drawTile(self.playerTurn, k*n*m)

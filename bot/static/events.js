@@ -45,6 +45,7 @@ function setGameState(state){
     drawPileSize = state.drawPileSize
     buttons[1].html('Draw tile ('+drawPileSize+')')
     updateBoardScore();
+    redraw();
 }
 
 function selectRoi(){
@@ -114,8 +115,10 @@ function keyPressed(){
 }
 
 function mousePressed(){
+
+    print(board)
     selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY));
-    if(selectedTile.x <0 || selectedTile.x>COLS || selectedTile.y <0 || selectedTile.y>ROWS ){
+    if( selectedTile.x <0 || selectedTile.x>COLS || selectedTile.y <0 || selectedTile.y>ROWS ){
         selectedTile = createVector(-1,-1)
     }
     boardModified = true;
@@ -123,6 +126,11 @@ function mousePressed(){
 
 function mouseReleased(){
   let newTileLocation = createVector(floor(mouseX/sizeX),floor(mouseY/sizeY))
+  if(newTileLocation.equals(selectedTile)){
+      selectedTile = createVector(-1,-1);
+      return;
+  }
+
   if(newTileLocation.y>=ROWS){ //Moved to player tileset
     let index = (newTileLocation.y-ROWS)*COLS+newTileLocation.x;
     let tileValue;

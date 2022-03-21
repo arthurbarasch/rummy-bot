@@ -18,6 +18,9 @@ class RummyPlayer(dict):
     def getTilePool(self, filter_value=None):
         return list(filter(lambda t: t[1] == filter_value, self.tiles)) if filter_value else self.tiles
 
+    def setTiles(self,tiles):
+        self.tiles = tiles
+
     def extend(self,tile):
         self.tiles.extend(tile)
 
