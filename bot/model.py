@@ -6,7 +6,7 @@ from bot.player import RummyPlayer
 
 # Variables
 
-NUM_PLAYERS = 2
+NUM_PLAYERS = 4
 m = 2  # Number of copies of the full tile set (without jokers)
 j = 0  # Number of jokers
 n = 13 # Number of different numbered values of tiles
@@ -15,7 +15,22 @@ k = 4  # Number of different suits
 # Sets
 K = list(range(1, k+1))  # Set of suits
 N = list(range(1, n+1))  # Set of numbered values
+SUIT_COLORS = ['black','blue','yellow','red']
 
+def generateDrawPile():
+    drawPile = []
+    for suit in K:
+        for val in N:
+            drawPile += [(suit, val)]
+
+    # Copy the full tile set 'm' times
+    temp = drawPile[:]
+    for i in range(m - 1):
+        drawPile.extend(temp)
+    # self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
+    return drawPile
+
+DRAW_PILE = generateDrawPile()
 
 class RummyModel:
     def __init__(self,model=None):
@@ -24,25 +39,12 @@ class RummyModel:
         self.players = [RummyPlayer(i) for i in range(NUM_PLAYERS)] if not model else [RummyPlayer(p.playerNr, player=p) for p in model.players]
         self.playerTurn = 0 if not model else model.playerTurn
         if not model:
-            self.generateDrawPile()
+            self.drawPile = DRAW_PILE[:]
         else:
             self.drawPile = model.drawPile[:]
 
     def __repr__(self) -> str:
         return super().__repr__()
-
-    def generateDrawPile(self):
-        self.drawPile = []
-        for suit in K:
-            for val in N:
-                self.drawPile += [(suit, val)]
-
-        # Copy the full tile set 'm' times
-        temp = self.drawPile[:]
-        for i in range(m - 1):
-            self.drawPile.extend(temp)
-
-        # self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
 
     # Copy input solution model to this model, while removing the player tiles used
     # and ensuring the draw pile is correct
@@ -56,7 +58,7 @@ class RummyModel:
 
     # Makes sure that the draw pile has the correct tiles after a player makes a move.
     def correctDrawPile(self):
-        self.generateDrawPile()
+        self.drawPile = DRAW_PILE[:]
         for tile in self.getTilesInGame():
             if tile not in self.drawPile:
                 logging.error('ERROR: while trying to correctBoard in /model.py/copySolution: tile {} is present more than {} times on the board'.format(tile, m))

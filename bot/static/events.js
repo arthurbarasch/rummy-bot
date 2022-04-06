@@ -43,7 +43,7 @@ function setGameState(state){
 
     players = state.players;
     drawPileSize = state.drawPileSize
-    buttons[1].html('Draw tile ('+drawPileSize+')')
+    drawTileButton.html('Draw tile ('+drawPileSize+')')
     updateBoardScore();
     redraw();
 }
@@ -87,6 +87,18 @@ function restartBoard(){
     let url = '/restart';
     messages = [];
     httpGet(url,'json',false,function(){
+        print("Board restart");
+        boardModified = false;
+        endMoveButton.addClass('disabled');
+    })
+}
+
+
+function newGame(gameMode){
+    let url = '/new-game';
+    messages = [];
+    postData = JSON.stringify({'gameMode':gameMode})
+    httpPost(url,'json',postData,function(){
         print("Board restart");
         boardModified = false;
         endMoveButton.addClass('disabled');

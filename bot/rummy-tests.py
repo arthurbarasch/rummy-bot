@@ -176,7 +176,7 @@ class RummyTestCase(unittest.TestCase):
 
         solver = RummySolver(self.model)
         self.assertEqual(19, solver.maxScore())
-        self.assertEqual([(1, 1), (1, 2), (1, 3),(1,4)],solver.solution.board["runs"][0])
+        self.assertEqual([(1,1),(1, 2), (1, 3),(1,4)],solver.solution.board["runs"][0])
         self.assertEqual(set([(1, 3), (3, 3), (4, 3)]), set(solver.solution.board["groups"][0]))
 
     def test_add_random_hand(self):

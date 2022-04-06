@@ -136,12 +136,13 @@ def endMove():
         controller.setModel(prev)
     return {'valid': valid, 'message': message}
 
-@app.route('/restart', methods=['POST','GET'])
-def restart():
+@app.route('/new-game', methods=['POST','GET'])
+def newGame():
     global controller
     global currSolutionIndex
-    controller.model.restart()
-    controller.model.start()
+    data = json.loads(request.data)
+    if(data['gameMode']):
+        controller = runRummyGame(gameMode=data['gameMode'])
     currSolutionIndex = -1
     return {}
 

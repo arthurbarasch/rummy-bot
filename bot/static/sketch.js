@@ -27,6 +27,7 @@ var gameOver = false;
 
 //Buttons
 var buttons = [];
+var drawTileButton; // For updating the display text to show draw pile size
 
 function setup() {
 
@@ -93,10 +94,15 @@ function updateBoardScore(){
 function createControlButtons(){
   buttons = []
 
-  restartButton = createButton('NEW GAME');
+  restartButton = createButton('NEW GAME<br><h5>HUMAN vs. AI</h5>');
   restartButton.addClass('btn-green')
-  restartButton.mousePressed(restartBoard);
+  restartButton.mousePressed(function(){newGame("HUMAN vs. AI")});
   buttons.push(restartButton)
+
+  botvbotButton = createButton('NEW GAME<br><h5>AI vs. AI</h5>');
+  botvbotButton.addClass('btn-green')
+  botvbotButton.mousePressed(function(){newGame("AI vs. AI")});
+  buttons.push(botvbotButton)
 
   drawTileButton = createButton('Draw tile');
   drawTileButton.mousePressed(drawRandomTile);
@@ -106,11 +112,6 @@ function createControlButtons(){
   endMoveButton.mousePressed(endPlayerMove);
   endMoveButton.addClass('disabled');
   buttons.push(endMoveButton)
-
-  restartButton = createButton('NEW GAME (restart)');
-  restartButton.addClass('btn-green')
-  restartButton.mousePressed(restartBoard);
-  buttons.push(restartButton)
 
   randomButton = createButton('Add random hand');
   randomButton.mousePressed(addRandomHand);

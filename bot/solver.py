@@ -1,4 +1,4 @@
-from bot.model import m, n, k, RummyModel, K
+from bot.model import m, n, k, RummyModel, K, SUIT_COLORS
 import math
 import logging
 import numpy as np
@@ -24,13 +24,13 @@ class RummySolver:
     def outputGraphs(self):
         assert False # Ensure assertions are disabled for optimizing running MaxScore
         n_repetitions = 50 # Number of repetitions per run. Results are averaged accross repetitions
-        x_range = np.arange(10,70,5)
+        x_range = np.arange(10,60,3)
         recursions = []
         scores = []
         exec_times = []
         for i, handSize in enumerate(x_range):
             recursion, score, exec_time = np.zeros(n_repetitions),np.zeros(n_repetitions),np.zeros(n_repetitions)
-            for rep in range(n_repetitions-handSize):
+            for rep in range(n_repetitions):
                 model = RummyModel()
                 model.drawTile(0,handSize)
                 self.setModel(model)
@@ -39,9 +39,9 @@ class RummySolver:
                 exec_time[rep] = time.time()-start
                 recursion[rep] = sum(self.counters.get('recursions'))
                 progress = math.floor(((n_repetitions*i)+rep)/(len(x_range)*n_repetitions)*100)
-                print('{}/{} {} {}%'.format((n_repetitions*i)+rep, len(x_range)*n_repetitions, '*'*progress, progress))
+                print('{}% {} {}/{} (took {:.3f} s)'.format(progress,'*'*progress, (n_repetitions*i)+rep, len(x_range)*n_repetitions, exec_time[rep]))
             recursions.append(np.median(recursion))
-            exec_times.append(np.median(exec_time))
+            exec_times.append(exec_time)
             scores.append(np.median(score))
 
         fig, axs = plt.subplots(3,1,figsize=(18, 22))
@@ -64,21 +64,32 @@ class RummySolver:
         ax = axs[2]
         ax.set_title('RummySolver performance')
         y_range = exec_times
-        ax.plot(x_range,y_range,color='orange')
+        plt.boxplot(y_range,showfliers=False)
+        plt.xticks(np.arange(len(x_range)),x_range) #TODO fix x ticks
         ax.set_xlabel('Hand size')
         ax.set_ylabel('Execution time (s)')
-        # plt.rcParams.update({
-        #     "font.family": "serif",  # use serif/main font for text elements
-        #     "text.usetex": True,  # use inline math for ticks
-        #     "pgf.texsystem":'lualatex',
-        #     "pgf.rcfonts": False,  # don't setup fonts from rc parameters
-        #     "pgf.preamble": "\n".join([
-        #         r"\usepackage{url}",  # load additional packages
-        #         r"\usepackage{unicode-math}",  # unicode math setup
-        #         r"\setmainfont{DejaVu Serif}",  # serif font via preamble
-        #     ])
-        # })
-        plt.savefig('output/fig.pdf') #, backend='pgf') # Use pgf backend for outputting graphs styled for LaTex https://matplotlib.org/stable/tutorials/text/pgf.html
+        plt.rcParams.update({
+            "font.family": "serif",  # use serif/main font for text elements
+            "text.usetex": True,  # use inline math for ticks
+            "pgf.rcfonts": False,  # don't setup fonts from rc parameters
+            "pgf.preamble": "\n".join([
+                r"\usepackage{url}",  # load additional packages
+                r"\usepackage{unicode-math}",  # unicode math setup
+                r"\setmainfont{DejaVu Serif}",  # serif font via preamble
+            ])
+        })
+        plt.savefig('output/fig.pdf') # Use pgf backend for outputting graphs styled for LaTex https://matplotlib.org/stable/tutorials/text/pgf.html
+
+    def displayRunsArray(self,runs):
+        ret='--------------\n|\tm\t|\t1\t|\t2\t|\n'
+
+        # for suit in range(k):
+        #     ret += '|({})\t{}|'.format(K[suit])
+        #     for rep in range(m):
+        #         ret+=
+
+
+
 
     def displayCounters(self):
         print('#+#+#+#+#+#+#+#+#+#+# RECURSION COUNTERS #+#+#+#+#+#+#+#+#+#+#')
@@ -138,9 +149,9 @@ class RummySolver:
         new_runs, new_hands, run_scores, solutions = self.makeRuns(hand, runs, value, solution)
 
         for i in range(len(new_runs)):
-            if [(1,1),(1,2),(1,3),(1,4)] in solutions[i].board["runs"]:
-                print('({})WTF?\n{}'.format(value,solutions[i]))
-                print('with hand {}'.format(new_hands[i]))
+            # if [(1,1),(1,2),(1,3),(1,4)] in solutions[i].board["runs"]:
+            #     print('({})WTF?\n{}'.format(value,solutions[i]))
+            #     print('with hand {}'.format(new_hands[i]))
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value, new_hands[i], run_scores[i])
             groupScores, solutions[i] = self.totalGroupSize(new_hands[i], solutions[i])
             # found = ''
@@ -165,8 +176,8 @@ class RummySolver:
                     #     print(found+str(self.score[value - 1][runHash][0]))
                     # if found != '':
                     #     print(found+'FINAL SOLUTION:\n{}\n\n'.format(solutions[i]))
-                    if (runHash in self.score[value - 1] and (1,1) in solutions[i].getBoardTilePool() ):
-                        print('({}). Prev max {}, new max {}->{}'.format(value,self.score[value - 1][runHash][0], result, solutions[i]))
+                    # if (runHash in self.score[value - 1] and (1,1) in solutions[i].getBoardTilePool() ):
+                    #     print('({}). Prev max {}, new max {}->{}'.format(value,self.score[value - 1][runHash][0], result, solutions[i]))
                     self.score[value - 1][runHash] = (result, RummyModel(solutions[i]))
             else:
                 self.counters['tb_constraint_prunes'][value - 1] += 1
@@ -223,7 +234,7 @@ class RummySolver:
         # Iterate over possibilities of creating/extending runs of the given suit, value.
         # We must try tiles in each run individually
         for M in range(m):
-            if tilesAvailable == 1 and M==m-1 and runs[suit-1][0]>runs[suit-1][1]:
+            if tilesAvailable == 1 and M == m-1 and runs[suit-1][0] > runs[suit-1][1]:
                 continue
             new_runs = np.array(runs)
             new_solution = RummyModel(solution)
@@ -254,8 +265,6 @@ class RummySolver:
         runVal = runs[suit - 1, M]
         if runVal == 0:
             runs[suit - 1, M] += 1
-            if(tile == (1,2)):
-                print(solution.board["runs"])
             solution.initNewRun(tile)
             return 0
         elif runVal == 1:  # If current length of run 0 or 1, increase length by one
@@ -276,7 +285,6 @@ class RummySolver:
         if len(hand) < 3:
             return 0, solution
 
-        # TODO: Generalize over 'm'
         groups = [[], []]
         for tile in hand:
             if isinstance(tile, list):

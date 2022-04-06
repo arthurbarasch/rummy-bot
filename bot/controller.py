@@ -4,18 +4,18 @@ import time
 from threading import Timer
 
 GAME_MODE = {'HUMAN vs. AI': 0,'AI vs. AI': 1}
-DELAY = 0.8
+DELAY = 0.3
 
 class RummyController:
-    def __init__(self, model:RummyModel):
-        self.setModel(model)
+    def __init__(self, model:RummyModel, gameMode = 'HUMAN vs. AI'):
+        self.setModel(model,gameMode)
 
-    def setModel(self, model:RummyModel):
+    def setModel(self, model:RummyModel, gameMode = 'HUMAN vs. AI'):
         assert isinstance(model,RummyModel)
         self.model = model
         self.solver = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS-1
-        self.gameMode = GAME_MODE['HUMAN vs. AI']
+        self.gameMode = GAME_MODE[gameMode]
         self.model.players[self.botPlayer].human = False
 
 
@@ -58,9 +58,9 @@ class RummyController:
             self.model.drawTile(self.model.playerTurn)
             Timer(2*DELAY, self.nextPlayer).start()
 
-def runRummyGame(solve=True):
+def runRummyGame(solve=False, gameMode="HUMAN vs. AI"):
     model = RummyModel()
-    controller = RummyController(model)
+    controller = RummyController(model,gameMode)
     controller.model.start()
     if solve:
         # Insert example game states here
