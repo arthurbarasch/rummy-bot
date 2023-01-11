@@ -6,7 +6,7 @@ from bot.player import RummyPlayer
 
 # Variables
 
-NUM_PLAYERS = 4
+NUM_PLAYERS = 2
 m = 2  # Number of copies of the full tile set (without jokers)
 j = 0  # Number of jokers
 n = 13 # Number of different numbered values of tiles

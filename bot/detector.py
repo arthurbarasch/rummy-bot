@@ -4,16 +4,15 @@
 from flask import Flask, render_template, Response, request
 from threading import Timer
 import cv2
-import random
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from scipy.io import loadmat
 import pytesseract as tess
 from bot.controller import runRummyGame
 from bot.solver import RummySolver
 from bot.model import RummyModel
 import json
+import io
+from flask import Response
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 #Initialize the Flask app
 app = Flask(__name__)
@@ -185,6 +184,15 @@ def solve():
 def selectROI():
     rd.selectROI()
     return {}
+
+@app.route('/output/runs.gif')
+def runs_heatmap():
+    solver = RummySolver(controller.model)
+    solver.maxScore()
+    fig = solver.displayRunsArray()
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return Response(output.getvalue(), mimetype='image/png')
 
 def startLocalServer():
     app.run(debug=False)

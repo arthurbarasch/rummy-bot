@@ -200,7 +200,7 @@ class RummyTestCase(unittest.TestCase):
         self.model.restart()
         score = self.model.addRandomHand()
         solver = RummySolver(self.model,test_mode=True)
-        # solver.outputGraphs()
+        solver.displayRunsArray(solver.runs)
         self.assertEqual(True,True)
 
     # def test_make_runs_all_tiles(self):

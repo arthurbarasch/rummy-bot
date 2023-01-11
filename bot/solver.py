@@ -1,10 +1,13 @@
-from bot.model import m, n, k, RummyModel, K, SUIT_COLORS
+from bot.model import m, n, k, RummyModel, K, SUIT_COLORS, N
 import math
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import time
+import seaborn as sn
+import pandas as pd
+import imageio
 
 class RummySolver:
     def __init__(self, model: RummyModel, test_mode = False):
@@ -13,7 +16,7 @@ class RummySolver:
 
     def setModel(self, model: RummyModel):
         self.model = model
-        self.counters = {'recursions':np.zeros(n), 'memoization_prunes': np.zeros(n),'tb_constraint_prunes': np.zeros(n)}
+        self.counters = {'recursions':np.zeros(n), 'memoization_prunes': np.zeros(n),'tb_constraint_prunes': np.zeros(n),'best_runs':[]}
         self.score = []
         for i in range(n):
             self.score.append(dict())
@@ -23,8 +26,8 @@ class RummySolver:
     # Output's graph's of collected data to /output/fig.png
     def outputGraphs(self):
         assert False # Ensure assertions are disabled for optimizing running MaxScore
-        n_repetitions = 50 # Number of repetitions per run. Results are averaged accross repetitions
-        x_range = np.arange(10,60,3)
+        n_repetitions = 40 # Number of repetitions per run. Results are averaged accross repetitions
+        x_range = np.arange(10,50,5)
         recursions = []
         scores = []
         exec_times = []
@@ -80,16 +83,20 @@ class RummySolver:
         })
         plt.savefig('output/fig.pdf') # Use pgf backend for outputting graphs styled for LaTex https://matplotlib.org/stable/tutorials/text/pgf.html
 
-    def displayRunsArray(self,runs):
-        ret='--------------\n|\tm\t|\t1\t|\t2\t|\n'
+    def displayRunsArray(self):
+        for i in range(n):
+            maxRun = max(self.score[i].items(),key=(lambda x:x[1]))[1][1]
 
-        # for suit in range(k):
-        #     ret += '|({})\t{}|'.format(K[suit])
-        #     for rep in range(m):
-        #         ret+=
+            print(maxRun)
+            df = pd.DataFrame(maxRun,K,list(range(m)))
+            df.style.background_gradient(cmap='Blues')
+            figure = sn.heatmap(df, annot=True, cmap='coolwarm',linecolor='white',linewidths=1).get_figure()
+            figure.savefig('output/runs'+i+'.png', dpi=400)
 
-
-
+        with imageio.get_writer('runs.gif', mode='I') as writer:
+            for filename in ['output/runs'+i+'.png' for i in range(n)]:
+                image = imageio.imread(filename)
+                writer.append_data(image)
 
     def displayCounters(self):
         print('#+#+#+#+#+#+#+#+#+#+# RECURSION COUNTERS #+#+#+#+#+#+#+#+#+#+#')
@@ -147,11 +154,9 @@ class RummySolver:
         logging.warning('HAND->{}\n'.format(hand))
         # Make runs
         new_runs, new_hands, run_scores, solutions = self.makeRuns(hand, runs, value, solution)
-
+        if(len(new_runs)==0):
+            return 0, solution
         for i in range(len(new_runs)):
-            # if [(1,1),(1,2),(1,3),(1,4)] in solutions[i].board["runs"]:
-            #     print('({})WTF?\n{}'.format(value,solutions[i]))
-            #     print('with hand {}'.format(new_hands[i]))
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value, new_hands[i], run_scores[i])
             groupScores, solutions[i] = self.totalGroupSize(new_hands[i], solutions[i])
             # found = ''
@@ -166,24 +171,13 @@ class RummySolver:
             # Check the table constraint with the previous model, unless player is in quarantine
             if quarantine or solutions[i].checkTableConstraint(self.model, value):
                 score, solutions[i] = self._maxScore(value + 1, new_runs[i], solutions[i],quarantine)
-                # if found != '':
-                #     found += 'SCORE AFTER RECURSION:{}\n'.format(score)
-                #     found+='SOLUTION AFTER RECURSION:\n{}\n'.format(solutions[i])
                 result = groupScores + run_scores[i] + score
                 if runHash not in self.score[value - 1] or result >= self.score[value - 1][runHash][0]:
-                    # if result == 30 and runHash in self.score[value - 1]:
-                    #     print('FOUND 30')
-                    #     print(found+str(self.score[value - 1][runHash][0]))
-                    # if found != '':
-                    #     print(found+'FINAL SOLUTION:\n{}\n\n'.format(solutions[i]))
-                    # if (runHash in self.score[value - 1] and (1,1) in solutions[i].getBoardTilePool() ):
-                    #     print('({}). Prev max {}, new max {}->{}'.format(value,self.score[value - 1][runHash][0], result, solutions[i]))
+                    self.runs = new_runs[i]
                     self.score[value - 1][runHash] = (result, RummyModel(solutions[i]))
             else:
                 self.counters['tb_constraint_prunes'][value - 1] += 1
                 result = "0 (doesn't satisfy table constraint) "
-                # if runHash not in self.score[value - 1]:
-                #     self.score[value - 1][runHash] = (0, RummyModel(solution))
 
             # Log the recursion
             debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores, result)
@@ -199,7 +193,7 @@ class RummySolver:
         self.makeNewRun(hand, np.array(runs), (1, value), RummyModel(solution), ret)
 
         # Assertions about the length of the arrays returned
-        assert len(ret['new_runs']) > 0
+        assert len(ret['new_runs']) >= 0
         assert sum(
             [len(ret['new_runs']), len(ret['new_hands']), len(ret['run_scores']), len(ret['solutions'])]) / 4 == len(
             ret['new_runs'])
@@ -217,14 +211,10 @@ class RummySolver:
 
         # TODO: Check for performance
         tilesAvailable = hand.count(searchTile)
-        if searchTile == (1,2):
-            print('{} ({})s in hand {}'.format(tilesAvailable, searchTile, hand))
 
         if tilesAvailable == 0:
             if runs[suit-1][0]>0 or runs[suit-1][1]>0 :
-                solution.validateBoard(filter_suit=suit) # Clear board of unfinished runs
-                runs[suit-1][0] = 0 # Reset run values
-                runs[suit-1][1] = 0
+                return
             self.makeNewRun(hand, runs, (suit + 1, value), solution, ret, run_scores)
             return
 
