@@ -111,6 +111,8 @@ def sendGameState():
     global rummyBotSolutions
 
     if controller and controller.model:
+        if currSolutionIndex>=0 and currSolutionIndex<len(rummyBotSolutions):
+            return rummyBotSolutions[currSolutionIndex].encodeJSON()
         return controller.model.encodeJSON()
     else:
         return {}
@@ -123,16 +125,16 @@ def endMove():
     print('Player ended move. Board is{} valid'.format(' ' if valid else ' not'))
     message = ''
     if valid:
-        if controller.model.getCurrentPlayer().quarantine and controller.model.getBoardScore() < prev.getBoardScore()+30:
+        if controller.model.getCurrentPlayer().quarantine and prev.getBoardScore()+30 > controller.model.getBoardScore():
             message = 'You need to place 30 points down in one round to exit quarantine'
-            controller.setModel(prev)
+            controller.init(prev)
         else:
             controller.model.getCurrentPlayer().quarantine = False
             Timer(1.0, controller.nextPlayer).start()
             message = 'Next player'
     else:
         message = 'Cannot end move, the board is not valid. Returning tiles'
-        controller.setModel(prev)
+        controller.init(prev)
     return {'valid': valid, 'message': message}
 
 @app.route('/new-game', methods=['POST','GET'])

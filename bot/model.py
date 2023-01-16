@@ -176,10 +176,10 @@ class RummyModel:
 
     # Add a random group or run to the board (given available tiles on the draw pile)
     # return the number of points in the hand added
-    def addRandomHand(self):
+    def addRandomHand(self, group=None):
         hand = None
         while (hand is None) or not (self.addRun(hand) or self.addGroup(hand)):
-            if random.random()>0.5:
+            if random.random()>0.5 and group is None:
                 tile = random.choice(self.drawPile)
                 length = random.randrange(3, 6)
                 hand = [(tile[0], val) for val in range(tile[1], tile[1]+length)]
@@ -266,8 +266,7 @@ class RummyModel:
         for run in prev.board["runs"]:
             if filter_suit and run[0][0] != filter_suit:
                 self.board["runs"].append(run)
-                continue
-            if not self.addRun(run):
+            elif not self.addRun(run):
                 valid = False
         for group in prev.board["groups"]:
             if not self.addGroup(group):
