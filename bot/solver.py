@@ -134,7 +134,9 @@ class RummySolver:
 
         # Base case
         if value > n:
-            solution.validateBoard()
+            valid = solution.validateBoard()
+            if not valid:
+                return -math.inf, solution
             return 0, solution
         runHash = self.getRunHash(runs)
         # Base case: memoization stored in 'score' array
@@ -155,7 +157,8 @@ class RummySolver:
         # Make runs
         new_runs, new_hands, run_scores, solutions = self.makeRuns(hand, runs, value, solution)
         if(len(new_runs)==0):
-            return 0, solution
+            self.score[value - 1][runHash] = (-math.inf, solution)
+            return -math.inf, solution
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value, new_hands[i], run_scores[i])
             groupScores, solutions[i] = self.totalGroupSize(new_hands[i], solutions[i])
@@ -188,6 +191,7 @@ class RummySolver:
     def makeRuns(self, hand, runs, value, solution: RummyModel):
         ret = {'new_runs': [], 'new_hands': [], 'run_scores': [], "solutions": []}
 
+
         # makeNewRun - recursive function
         # For each suit, create or extend runs with available tiles
         self.makeNewRun(hand, np.array(runs), (1, value), RummyModel(solution), ret)
@@ -201,6 +205,10 @@ class RummySolver:
         return ret['new_runs'], ret['new_hands'], ret['run_scores'], ret['solutions']
 
     def makeNewRun(self, hand, runs, searchTile, solution, ret, run_scores=0):
+        if -math.inf in ret['run_scores']:
+            ret = {'new_runs': [], 'new_hands': [], 'run_scores': [-math.inf], "solutions": []}
+            return
+
         suit, value = searchTile
         if suit > k:
             ret['new_runs'].append(np.array(runs))
@@ -214,6 +222,7 @@ class RummySolver:
 
         if tilesAvailable == 0:
             if runs[suit-1][0]>0 or runs[suit-1][1]>0 :
+                ret = {'new_runs': [], 'new_hands': [], 'run_scores': [-math.inf], "solutions": []}
                 return
             self.makeNewRun(hand, runs, (suit + 1, value), solution, ret, run_scores)
             return
@@ -224,6 +233,7 @@ class RummySolver:
         # Iterate over possibilities of creating/extending runs of the given suit, value.
         # We must try tiles in each run individually
         for M in range(m):
+            
             if tilesAvailable == 1 and M == m-1 and runs[suit-1][0] > runs[suit-1][1]:
                 continue
             new_runs = np.array(runs)
@@ -246,6 +256,10 @@ class RummySolver:
             new_hand.remove(searchTile)
             # Recursion over suits
             self.makeNewRun(new_hand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
+
+
+        if -math.inf in ret['run_scores']:
+            ret = {'new_runs': [], 'new_hands': [], 'run_scores': [-math.inf], "solutions": []}
         return
 
     # (Destructive method) Updates the runs array with the given tile, and returns the score added

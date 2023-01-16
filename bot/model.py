@@ -256,8 +256,6 @@ class RummyModel:
                     else:
                         logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
                         assert False
-
-
     # Checks to see if all groups and runs on the board are valid
     # Remove invalid hands
     def validateBoard(self,filter_suit=None):

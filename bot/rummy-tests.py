@@ -143,7 +143,7 @@ class RummyTestCase(unittest.TestCase):
         self.model.restart()
         self.model.addRun([(2, 2), (2, 3), (2, 4)])
         self.model.addRun([(2, 4), (2, 5), (2, 6)])
-        self.model.getCurrentPlayer().extend([(3, 7)])
+        self.model.getCurrentPlayer().extend([(2, 2)])
         solver = RummySolver(self.model)
         runs = np.zeros(shape=(k, m))
         solution = RummyModel()
