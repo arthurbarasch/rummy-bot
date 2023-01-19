@@ -236,14 +236,17 @@ class RummyModel:
     # Adds the input list of tiles to any runs available
     def addToRuns(self, tiles):
         assert len(tiles)>0
+        tilesToAdd = len(tiles)
         for run in self.board['runs']:
             if run[-1][1] + 1 == tiles[0][1] and run[-1][0] == tiles[0][0]:
                 for tile in tiles:
                     if run[-1][1] + 1 == tile[1] and run[-1][0] == tile[0]:
                         run.append(tile)
+                        tilesToAdd -= 1
                     else:
                         logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
                         assert False
+        return tilesToAdd == 0
 
 
     # Checks to see if all groups and runs on the board are valid
@@ -313,5 +316,5 @@ class RummyModel:
         return True
 
     def __str__(self):
-        str = 'Board: {}\nDraw pile({}): {}\nPlayers({},{}):{}'
-        return str.format(self.board, len(self.drawPile),self.drawPile, len(self.players[0]),len(self.players[1]), self.players)
+        str = 'Board: {}\nDraw pile({})\nPlayers({},{}):{}'
+        return str.format(self.board, len(self.drawPile), len(self.players[0]),len(self.players[1]), self.players)

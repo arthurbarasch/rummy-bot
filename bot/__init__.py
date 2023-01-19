@@ -1,7 +1,7 @@
 from bot.model import *
 from bot.controller import *
 from bot.view import *
-from bot.detector import startLocalServer
+from bot.app import startLocalServer
 import logging
 
 

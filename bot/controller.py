@@ -57,6 +57,7 @@ class RummyController:
         score = self.solver.maxScore(quarantine=self.model.players[self.botPlayer].quarantine)
         if score != self.model.getBoardScore() and (score >= 30+prev_score or not self.model.players[self.botPlayer].quarantine):
             print('RummyBot making moves on the board\n')
+            self.model.players[self.botPlayer].quarantine = False
             self.model.copySolution(self.solver.solution)
             Timer(3.5*DELAY, self.nextPlayer).start()
         else:
@@ -71,6 +72,8 @@ def runRummyGame(solve=True):
     controller.model.start()
     #controller.model.players[controller.botPlayer].extend([(1,9),(1,10),(1,11)])
     #controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])
+    #model.getCurrentPlayer().extend([(1, 2), (1, 3),(1, 4)])
+
     if solve:
         # Insert example game states here
         print('Computing max score for current game state:')
