@@ -9,19 +9,19 @@ GAME_MODE = {'HUMAN vs. AI': 0,'AI vs. AI': 1}
 DELAY = 0.5
 
 class RummyController:
-    def __init__(self, model:RummyModel, view:RummyView):
+    def __init__(self, model:RummyModel, view:RummyView, game_mode=GAME_MODE['HUMAN vs. AI']):
         assert isinstance(model,RummyModel)
         assert isinstance(view,RummyView)
 
         self.view = view
-        self.init(model)
+        self.init(model,game_mode)
 
 
-    def init(self, model:RummyModel):
+    def init(self, model:RummyModel, game_mode):
         self.model = model
         self.solver = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS-1
-        self.gameMode = GAME_MODE['HUMAN vs. AI']
+        self.gameMode = game_mode
         if self.gameMode == GAME_MODE['AI vs. AI']:
             self.nextPlayer()
 
@@ -53,22 +53,23 @@ class RummyController:
 
     def makeMoveBot(self):
         prev_score = self.model.getBoardScore()
-        self.solver = RummySolver(self.model)
+        self.solver = RummySolver(RummyModel(self.model))
         score = self.solver.maxScore(quarantine=self.model.players[self.botPlayer].quarantine)
+
         if score != self.model.getBoardScore() and (score >= 30+prev_score or not self.model.players[self.botPlayer].quarantine):
-            print('RummyBot making moves on the board\n')
+            print('RummyBot making moves on the board (best possible score is {})\n'.format(score))
             self.model.players[self.botPlayer].quarantine = False
-            self.model.copySolution(self.solver.solution)
+            self.model = RummyModel(self.solver.solution)
             Timer(3.5*DELAY, self.nextPlayer).start()
         else:
-            print('RummyBot making move: Drawing tile\n')
+            print('RummyBot draws a tile (best possible score is {})\n'.format(score))
             self.model.drawTile(self.model.playerTurn)
             Timer(2*DELAY, self.nextPlayer).start()
 
 def runRummyGame(solve=True):
     model = RummyModel()
     view = RummyView()
-    controller = RummyController(model, view)
+    controller = RummyController(model, view, game_mode=GAME_MODE['AI vs. AI'])
     controller.model.start()
     #controller.model.players[controller.botPlayer].extend([(1,9),(1,10),(1,11)])
     #controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])

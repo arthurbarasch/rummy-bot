@@ -60,17 +60,17 @@ function drawRandomTile(){
     })
 }
 
-function addRandomHand(){
-    let url = '/add-hand';
+function newGame(){
+    let url = '/restart';
     httpGet(url,'json',false,function(){
-        print("Add random hand");
+        print("Board restart");
         boardModified = false;
         endMoveButton.addClass('disabled');
     })
 }
 
-function restartBoard(){
-    let url = '/restart';
+function newGameAI(){
+    let url = '/restart-ai';
     httpGet(url,'json',false,function(){
         print("Board restart");
         boardModified = false;

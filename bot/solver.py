@@ -33,7 +33,11 @@ class RummySolver:
 
     def maxScore(self, quarantine=False):
         score, solution = self._maxScore(quarantine=quarantine)
-        self.solution = solution
+        self.solution = RummyModel(self.model)
+        self.solution.copySolution(solution)
+        # newPlayerTiles = solution.compareModels(self.model)
+        # solution.getCurrentPlayer().setTiles(newPlayerTiles)
+        # self.solution = solution
         self.displayCounter()
         return score
 
@@ -63,35 +67,38 @@ class RummySolver:
         new_runs, new_hands, run_scores, solutions = self.makeRuns(hand, runs, value, solution)
 
         if len(new_runs) == 0:
-            # if runHash not in self.score[value-1]:
-            #     self.score[value - 1][runHash] = (-math.inf, solution)
-
-            return 0, solution
+            if runHash not in self.score[value-1]:
+                self.score[value - 1][runHash] = (-math.inf, solution)
+            return -math.inf, solution
 
 
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value, new_hands[i], run_scores[i])
-            new_solution = solutions[i]
 
             if(run_scores[i]>0):
                 logging.warning(run_scores[i])
 
-            groupScores, new_solution = self.totalGroupSize(new_hands[i], new_solution)
+            groupScores, new_solution = self.totalGroupSize(new_hands[i], solutions[i])
             groupScores = groupScores * value
             logging.debug(
                 '~~~~~~~~~~~~~* DEBUG STRING *~~~~~~~~~~~\n' + debugStr + ' \tgroupscores:{}\tsolution:\n{}\n'.format(
                     groupScores, new_solution))
             assert groupScores <= new_solution.getBoardScore()
 
+            if groupScores == 30:
+                assert len(new_solution.board['groups']) > 0
+                logging.warning('\n################\n' + str(new_solution) + '\n###############')
+
             # Check the table constraint with the previous model
-            if solution.checkTableConstraint(self.model, value):
+            if new_solution.checkTableConstraint(self.model, filter_value=value):
                 score, new_solution = self._maxScore(value + 1, new_runs[i], new_solution)
                 result = groupScores + run_scores[i] + score
-                if runHash not in self.score[value - 1] or result > self.score[value - 1][runHash][0]:
+
+                if runHash not in self.score[value - 1] or result >= self.score[value - 1][runHash][0]:
                     self.score[value - 1][runHash] = (result, new_solution)
             else:
-                result = "-inf (doesn't satisfy table constraint) "
                 if runHash not in self.score[value - 1]:
+                    result = "-inf (doesn't satisfy table constraint) "
                     self.score[value - 1][runHash] = (-math.inf, new_solution)
 
             # Log the recursion
@@ -155,30 +162,36 @@ class RummySolver:
                 if tilesAvailable != m:
                     break
                 else:
+                    new_solution = RummyModel(solution)
                     new_score = 0
                     new_hand = hand[:]
                     logging.warning("TRYING BOTH AT SAME TIME")
                     for i in range(m):
-                        new_score += self.updateRun(new_run, searchTile, i, solution)
-                        logging.warning('NEW SCORE({}):{}'.format(i,new_score))
+                        new_score += self.updateRun(new_run, searchTile, i, new_solution)
                         new_hand.remove((suit, value))
+                    logging.warning('NEW SCORE({}):{}'.format(i,new_score))
 
                     # Recursion over suits
-                    self.makeNewRun(new_hand, new_run, (suit + 1, value), solution, ret, run_scores + new_score)
+                    self.makeNewRun(new_hand, new_run, (suit + 1, value), new_solution, ret, run_scores + new_score)
             else:
+                if M == 1 and tilesAvailable == 1 and runs[suit - 1, 0] != runs[suit - 1, 1]:
+                    runs[suit - 1, 1] = 0
+                    break
+
                 # If the runs value of both m=1 and m=2 are equal, there is no need
                 # to try both runs
                 if runs[suit - 1, 0] == runs[suit - 1, 1] and M == 1:
                     continue
 
-                new_score = self.updateRun(new_run, searchTile, M, solution)
+                new_solution = RummyModel(solution)
+                new_score = self.updateRun(new_run, searchTile, M, new_solution)
                 new_hand = hand[:]
                 new_hand.remove((suit, value))
                 # Recursion over suits
-                self.makeNewRun(new_hand, new_run, (suit + 1, value), solution, ret, run_scores + new_score)
+                self.makeNewRun(new_hand, new_run, (suit + 1, value), new_solution, ret, run_scores + new_score)
 
         # An extra possibility of no tiles of this sort being used for runs
-        self.makeNewRun(hand, new_run, (suit + 1, value), solution, ret, run_scores)
+        self.makeNewRun(hand, np.array(runs), (suit + 1, value), RummyModel(solution), ret, run_scores)
 
 
     # def extendBranch(self, ret, add):
@@ -211,12 +224,10 @@ class RummySolver:
             runs[suit - 1, M] += 1
 
             r = [(suit, value-2), (suit, value-1), tile]
-            solution.addRun(r)
-            logging.warning('Added new run -> '+str(r))
-            assert len(solution.board['runs']) > 0
+            assert solution.addRun(r)
             return (value - 2) + (value - 1) + value
         elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
-            assert solution.addToRuns([tile])
+            assert solution.addToRun(tile,M)
             return value
 
     # Return the total group size that can be formed from the given 'hand'
@@ -226,7 +237,7 @@ class RummySolver:
 
         # TODO: Generalize over 'm'
         g1 = list(set(hand))
-        g2 = hand
+        g2 = hand[:]
         for tile in g1:
             g2.remove(tile)
 
@@ -238,21 +249,23 @@ class RummySolver:
                     g2.append(t)
                     break
 
-        groups = [g1, g2]
-        l1 = len(groups[0])
-        l2 = len(groups[1])
+        l1 = len(g1)
+        l2 = len(g2)
 
 
         if l1 >= 3:
             lengroups = len(solution.board['groups'])
-            solution.addGroup(groups[0])
+            assert solution.addGroup(g1)
             if lengroups + 1 != len(solution.board['groups']):
-                logging.error('ERROR: on /solver.py/totalGroupSize > tried adding {} as a group'.format(groups[0]))
+                logging.error('ERROR: on /solver.py/totalGroupSize > tried adding {} as a group'.format(g1))
                 return 0, solution
 
         if l2 >= 3:
-            solution.addGroup(groups[1])
-        return ((l1 if l1 >= 3 else 0) + (l2 if l2 >= 3 else 0)), solution
+            assert solution.addGroup(g2)
+
+        score = l1 if l1 >= 3 else 0
+        score += l2 if l2 >= 3 else 0
+        return score, solution
 
     @staticmethod
     def getRunHash(run):

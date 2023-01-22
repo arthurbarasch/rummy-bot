@@ -9,7 +9,7 @@ from bot.player import RummyPlayer
 NUM_PLAYERS = 2
 m = 2  # Number of copies of the full tile set (without jokers)
 j = 0  # Number of jokers
-n = 13 # Number of different numbered values of tiles
+n = 13  # Number of different numbered values of tiles
 k = 4  # Number of different suits
 
 # Sets
@@ -21,12 +21,19 @@ class RummyModel:
     def __init__(self,model=None):
         assert model is None or isinstance(model,RummyModel)
         self.board = {'runs': [], 'groups': []} if not model else {'runs': model.board["runs"][:], 'groups': model.board["groups"][:]}
-        self.players = [RummyPlayer(i) for i in range(NUM_PLAYERS)] if not model else model.players[:]
+
         self.playerTurn = 0 if not model else model.playerTurn
         if not model:
             self.generateDrawPile()
+            self.players = [RummyPlayer(playerNr=i) for i in range(NUM_PLAYERS)]
         else:
             self.drawPile = model.drawPile[:]
+            self.copyPlayers(model.players)
+
+    def copyPlayers(self,players):
+        self.players = []
+        for p in players:
+            self.players.append(RummyPlayer(p))
 
     def __repr__(self) -> str:
         return super().__repr__()
@@ -62,15 +69,15 @@ class RummyModel:
                 self.drawPile.remove(tile)
 
 
-    # Compares current model with input model to determine tiles not present on the intersections of board sets.
+    # Compares current model with input (previous) model to determine tiles not present on the intersections of board sets.
     # Return the updated player tiles
-    def compareModels(self, model):
+    def compareModels(self, prev):
         tiles = self.getBoardTilePool()
-        for tile in model.getBoardTilePool():
+        for tile in prev.getBoardTilePool():
             if tile in tiles:
                 tiles.remove(tile)
 
-        player = model.getCurrentPlayer()
+        player = prev.getCurrentPlayer()
         for t in tiles:
             if t in player:
                 player.remove(t)
@@ -170,6 +177,8 @@ class RummyModel:
             if random.random()>0.5 and group is None:
                 tile = random.choice(self.drawPile)
                 length = random.randrange(3, 6)
+                if tile[1]+length>n:
+                    continue
                 hand = [(tile[0], val) for val in range(tile[1], tile[1]+length)]
             else:
                 tile = random.choice(self.drawPile)
@@ -222,7 +231,7 @@ class RummyModel:
             if value == 0:
                 value = tile[1]
                 continue
-            if value != tile[1] - 1:
+            if value + 1 != tile[1] or tile[1]>n:
                 logging.error('Cannot add run because of tile '+str(tile))
                 return False
             value = tile[1]
@@ -233,20 +242,56 @@ class RummyModel:
     def initNewRun(self,tile):
         self.board["runs"].append([tile])
 
-    # Adds the input list of tiles to any runs available
-    def addToRuns(self, tiles):
-        assert len(tiles)>0
-        tilesToAdd = len(tiles)
+    # Adds the input tile to an available run available
+    # If two available runs for such tile, use the input value M to establish priority
+    def addToRun(self, tile,M):
+        run1 = None
+        run2 = None
+
         for run in self.board['runs']:
-            if run[-1][1] + 1 == tiles[0][1] and run[-1][0] == tiles[0][0]:
-                for tile in tiles:
-                    if run[-1][1] + 1 == tile[1] and run[-1][0] == tile[0]:
-                        run.append(tile)
-                        tilesToAdd -= 1
-                    else:
-                        logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
-                        assert False
-        return tilesToAdd == 0
+            if run[-1][0] != tile[0]:
+                continue
+
+            if run[-1][1]+1 == tile[1]:
+                if run1 is None:
+                    run1 = run
+                else:
+                    run2 = run
+
+        if run1 is not None and run2 is None:
+            run1.append(tile)
+            return True
+
+        if run1 is not None and run2 is not None:
+            if len(run1)>=len(run2):
+                if M == 0:
+                    run1.append(tile)
+                else:
+                    run2.append(tile)
+            else:
+                if M == 0:
+                    run2.append(tile)
+                else:
+                    run1.append(tile)
+            return True
+
+        logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
+        return False
+
+
+        # for run in self.board['runs']:
+        #     if run[-1][1] + 1 == tiles[0][1] and run[-1][0] == tiles[0][0]:
+        #         for tile in tiles:
+        #             if run[-1][1] + 1 == tile[1] and run[-1][0] == tile[0]:
+        #                 run.append(tile)
+        #                 tilesToAdd -= 1
+        #             else:
+        #                 logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
+        #                 assert False
+        #
+        # if tilesToAdd != 0:
+        #     logging.warning('RummyModel.addToRuns: Cannot insert tiles on runs. Tiles left -> {}'.format(tilesToAdd))
+        # return tilesToAdd == 0
 
 
     # Checks to see if all groups and runs on the board are valid
@@ -316,5 +361,12 @@ class RummyModel:
         return True
 
     def __str__(self):
+        SIMPLIFIED = True
+
+        if SIMPLIFIED:
+            hands = self.board['runs'][:]
+            hands.extend(self.board['groups'])
+            return hands.__str__()
+
         str = 'Board: {}\nDraw pile({})\nPlayers({},{}):{}'
         return str.format(self.board, len(self.drawPile), len(self.players[0]),len(self.players[1]), self.players)

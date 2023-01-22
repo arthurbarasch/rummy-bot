@@ -99,14 +99,15 @@ function createControlButtons(){
   endMoveButton.addClass('disabled');
   buttons.push(endMoveButton)
 
-  restartButton = createButton('NEW GAME (restart)');
+  restartButton = createButton('NEW GAME (HUMAN vs AI)');
   restartButton.addClass('btn-green')
-  restartButton.mousePressed(restartBoard);
+  restartButton.mousePressed(newGame);
   buttons.push(restartButton)
 
-  randomButton = createButton('Add random hand');
-  randomButton.mousePressed(addRandomHand);
-  buttons.push(randomButton)
+    restartButtonAI = createButton('NEW GAME (AI vs AI)');
+  restartButtonAI.addClass('btn-green')
+  restartButtonAI.mousePressed(newGameAI);
+  buttons.push(restartButtonAI)
 
   solveButton = createButton('SOLVE');
   solveButton.mousePressed(solveTable);
