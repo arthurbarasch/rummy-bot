@@ -125,6 +125,7 @@ class RummyModel:
                 r = random.randrange(0, len(self.drawPile))
                 tile = self.drawPile.pop(r)
                 self.players[playerIndex].append(tile)
+        self.players[playerIndex].sortTiles()
 
     def nextPlayer(self):
         self.playerTurn = (self.playerTurn + 1) % NUM_PLAYERS
@@ -283,7 +284,9 @@ class RummyModel:
                     run1.append(tile)
             return True
 
-        logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
+        msg = 'ERROR: /model.py/addToRuns: Cannot insert tile {} in {}'.format(tile, self.board['runs'])
+        logging.error(msg)
+        print(msg)
         return False
 
 

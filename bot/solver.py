@@ -27,6 +27,9 @@ class RummySolver:
             self.solution = RummyModel(self.model)
             return 0
 
+        hand = self.model.getTotalTilePool() if not quarantine else self.model.getCurrentPlayer().getTilePool()
+        print('Running MaxScore with tiles:\n\t-'+str(hand))
+
         score, solution = self._maxScore(quarantine=quarantine)
         self.solution = RummyModel(self.model)
         self.solution.copySolution(solution)
@@ -105,15 +108,7 @@ class RummySolver:
 
     def makeRuns(self, hand, runs, value, solution: RummyModel):
         ret = {'new_runs': [], 'new_hands': [], 'run_scores': [], "solutions": []}
-        # # Finish runs that cannot be continued (due to lack of tiles)
-        # for suit in K:
-        #     for M in range(m):
-        #         searchTile = (suit, value)
-        #         if not searchTile in hand and runs[suit - 1, M] > 0:
-        #             runs[suit - 1, M] = 0
-        #             solution.validateBoard(filter_suit=suit)
 
-        # makeNewRun - recursive function
         # For each suit, create or extend runs with available tiles
         self.makeNewRun(hand, np.array(runs), (1, value), RummyModel(solution), ret)
 
@@ -124,7 +119,7 @@ class RummySolver:
         assert len(ret['new_runs']) < (m + 2) ** 4
         return ret['new_runs'], ret['new_hands'], ret['run_scores'], ret['solutions']
 
-    # Iterate over possibilities of creating/extending runs of the given suit, value.
+    # Recursively iterate over possibilities of creating/extending runs of the given suit, value.
     def makeNewRun(self, hand, runs, searchTile, solution, ret, run_scores=0):
         suit, value = searchTile
         if suit > k:
@@ -172,8 +167,6 @@ class RummySolver:
             new_hand = hand[:]
             for j in range(m):
                 new_score += self.updateRun(new_run, searchTile, j, new_solution)
-                logging.error('IN BETWEEN (value={})'.format(value))
-                logging.error(new_solution)
                 new_hand.remove((suit, value))
 
             # Recursion over suits
@@ -191,7 +184,7 @@ class RummySolver:
         runVal = runs[suit - 1, M]
 
         if runVal == 0:
-            if value + 3 >= n:
+            if value + 2 > n:
                 # No need to start a new run if we know we can't finish it
                 return 0
             runs[suit - 1, M] += 1

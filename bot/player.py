@@ -1,7 +1,7 @@
 import logging
 
 
-class RummyPlayer(dict):
+class RummyPlayer(list):
     def __init__(self, player=None, playerNr=0):
         self.playerNr = playerNr if player is None else player.playerNr
         self.tiles = [] if player is None else player.tiles[:]
@@ -11,6 +11,9 @@ class RummyPlayer(dict):
 
     def getTilePool(self, filter_value=None):
         return list(filter(lambda t: t[1] == filter_value, self.tiles)) if filter_value else self.tiles
+
+    def sortTiles(self):
+        self.tiles = sorted(self.tiles, key=lambda tile: tile[1])
 
     def setTiles(self,tiles):
         self.tiles = tiles
