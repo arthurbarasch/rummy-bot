@@ -32,7 +32,6 @@ function setup() {
   cnv.parent('canvas-container')
   createControlButtons();
 
-  board = new Array();
   selectedTile = createVector(-1,-1);
   textAlign(CENTER);
   rectMode(CENTER);

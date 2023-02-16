@@ -121,6 +121,8 @@ function keyPressed(){
 }
 
 function mousePressed(){
+    if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height)return;
+
     selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY));
     if(selectedTile.x <0 || selectedTile.x>COLS || selectedTile.y <0 || selectedTile.y>ROWS ){
         selectedTile = createVector(-1,-1)
@@ -129,6 +131,8 @@ function mousePressed(){
 }
 
 function mouseReleased(){
+    if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height)return;
+
   let newTileLocation = createVector(floor(mouseX/sizeX),floor(mouseY/sizeY))
   if(newTileLocation.y>=ROWS){ //Moved to player tileset
     let index = (newTileLocation.y-ROWS)*COLS+newTileLocation.x;

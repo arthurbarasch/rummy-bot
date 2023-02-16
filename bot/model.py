@@ -341,31 +341,32 @@ class RummyModel:
 
             # Flag for removing double spaces between groups
             newSet = True
-            set = []
+            hand = []
             for tile in data['board']:
                 # Empty string '' represents a break between sets in the frontend
                 if tile != '':
                     # Frontend returns tiles as lists instead of tuple, make conversion
-                    set.append((tile[0], tile[1]))
+                    hand.append((tile[0], tile[1]))
                     newSet = False
                 elif newSet:
                     # Double space between sets returned from the frontend. Simply discard
                     continue
-                elif self.addRun(set) or self.addGroup(set):
+                elif self.addRun(hand) or self.addGroup(hand):
                     # Try adding the set to the model as a run or group
-                    set = []
+                    hand = []
                     newSet = True
                 else:
                     # If neither is valid, return False (board invalid)
-                    errMsg = 'ERROR: on decodeJSON:\n | Trying to add set: '+str(set)+'\n | Not a valid group or run\n'
+                    errMsg = 'ERROR: on decodeJSON:\n | Trying to add set: '+str(hand)+'\n | Not a valid group or run\n'
                     logging.error(errMsg)
                     print(errMsg)
                     return False
 
             for i, tiles in enumerate(data['players']):
-                # Frontend returns tiles as lists instead of tuple, make conversion
                 self.players[i].clearTiles()
-                self.players[i].extend(tiles)
+                for tile in tiles:
+                    # Frontend returns tiles as lists instead of tuple, make conversion
+                    self.players[i].append((tile[0],tile[1]))
 
             assert len(self.players) == NUM_PLAYERS
             return True
