@@ -4,7 +4,7 @@ from builtins import int
 import json
 import numpy as np
 
-from bot import RummyModel, RummySolver, RummyController, RummyView, runRummyGame, k, K, m, n, N, NUM_PLAYERS
+from bot import RummyModel, RummySolver, RummyController, runRummyGame, k, K, m, n, N, NUM_PLAYERS
 
 
 class RummyTestCase(unittest.TestCase):
