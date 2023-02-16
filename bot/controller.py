@@ -5,7 +5,7 @@ import time
 from threading import Timer
 
 GAME_MODE = {'HUMAN vs. AI': 0, 'AI vs. AI': 1}
-DELAY = 0.5
+BOT_MOVE_DELAY = 1.2
 
 
 class RummyController:
@@ -47,23 +47,23 @@ class RummyController:
         self.model.nextPlayer()
         if (self.gameMode == GAME_MODE['AI vs. AI'] or
            self.model.playerTurn == self.botPlayer) and not self.model.isGameOver():
-            Timer(1.5 * DELAY, self.makeMoveBot).start()
+            Timer(1.5 * BOT_MOVE_DELAY, self.makeMoveBot).start()
 
     def makeMoveBot(self):
         prev_score = self.model.getBoardScore()
         self.solver = RummySolver(self.model)
         score = self.solver.maxScore(quarantine=self.model.players[self.botPlayer].quarantine)
 
-        if score != self.model.getBoardScore() and (
+        if score != self.model.getBoardScore() and score > 0 and (
                 score >= 30 + prev_score or not self.model.players[self.botPlayer].quarantine):
             print('RummyBot making moves on the board (best possible score is {})\n'.format(score))
-            self.model.players[self.botPlayer].quarantine = False
             self.model = RummyModel(self.solver.solution)
-            Timer(3.5 * DELAY, self.nextPlayer).start()
+            self.model.players[self.botPlayer].quarantine = False
+            Timer(3.5 * BOT_MOVE_DELAY, self.nextPlayer).start()
         else:
             print('RummyBot draws a tile (best possible score is {})\n'.format(score))
             self.model.drawTile(self.model.playerTurn)
-            Timer(2 * DELAY, self.nextPlayer).start()
+            Timer(2 * BOT_MOVE_DELAY, self.nextPlayer).start()
 
 
 def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):

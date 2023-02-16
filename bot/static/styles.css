@@ -8,7 +8,7 @@ body{
     padding:0;
 }
 
-button{
+.btn{
     width:100%;
 }
 
@@ -49,9 +49,6 @@ button{
     disabled: true;
 }
 
-button{
-    width: 100%;
-}
 
 .btn-green{
     background-color: green;

@@ -4,7 +4,7 @@ from builtins import int
 import json
 import numpy as np
 
-from bot import RummyModel, RummySolver, RummyController, runRummyGame, k, K, m, n, N, NUM_PLAYERS
+from bot import RummyModel, RummySolver, RummyController, runRummyGame, k, K, m, n, N, NUM_PLAYERS, NUM_STARTING_TILES
 
 
 class RummyTestCase(unittest.TestCase):
@@ -74,29 +74,31 @@ class RummyTestCase(unittest.TestCase):
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
         self.model.getCurrentPlayer().append((1, 5))
         temp = self.model.getTotalTilePool(filter_value=10)
-        self.assertEquals([(1, 10), (2, 10), (3, 10)], temp)
+        self.assertEqual([(1, 10), (2, 10), (3, 10)], temp)
         temp = self.model.getTotalTilePool()
-        self.assertEquals([(1, 5), (1, 10), (2, 10), (3, 10)], temp)
+        self.assertEqual([(1, 5), (1, 10), (2, 10), (3, 10)], temp)
 
         self.model.restart()
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
+        self.model.addRun([(1, 11), (1, 12), (1, 13)])
+        self.model.getCurrentPlayer().extend([(1, 1), (1, 2)])
         temp = self.model.getTotalTilePool()
-        self.assertEquals([(1, 10), (2, 10), (3, 10)], temp)
+        self.assertEqual(set([(1, 10), (2, 10), (3, 10), (1, 11), (1, 12), (1, 13), (1, 1), (1, 2)]), set(temp))
 
     def test_restart(self):
         self.model.restart()
-        self.assertEquals(len(self.model.board["runs"]), 0)
-        self.assertEquals(len(self.model.board["groups"]), 0)
-        self.assertEquals(len(self.model.drawPile), n*k*m)
+        self.assertEqual(len(self.model.board["runs"]), 0)
+        self.assertEqual(len(self.model.board["groups"]), 0)
+        self.assertEqual(len(self.model.drawPile), n*k*m)
         for p in self.model.players:
-            self.assertEquals(len(p),0, "Player must have 0 tiles after 'restart()'")
+            self.assertEqual(len(p),0, "Player must have 0 tiles after 'restart()'")
 
     def test_start(self):
         self.model.restart()
         self.model.start()
         self.assertEqual(n, len(N))
         for player in self.model.players:
-            self.assertEqual(14, len(player))
+            self.assertEqual(NUM_STARTING_TILES, len(player))
 
     def test_rummy_params(self):
         self.assertEqual(n, 13)
@@ -116,7 +118,7 @@ class RummyTestCase(unittest.TestCase):
         self.model.addToRun((1,2),0)
         self.model.addToRun((1,3),0)
         self.model.initNewRun((2,1))
-        self.assertEquals(self.model.board["runs"][0], [(1,1),(1,2),(1,3)])
+        self.assertEqual(self.model.board["runs"][0], [(1,1),(1,2),(1,3)])
         self.assertEqual(self.model.validateBoard(filter_suit=2), False)
         self.assertEqual(self.model.getBoardScore(), 6)
 
@@ -140,9 +142,9 @@ class RummyTestCase(unittest.TestCase):
         hand = [(1,1),(1,1),(2,1),(2,1),(3,1)]
         groupSize,solution = solver.totalGroupSize(hand,self.model)
         self.assertEqual(3, groupSize)
-        self.assertEquals(len(solution.board["groups"]),1)
+        self.assertEqual(len(solution.board["groups"]),1)
         self.assertEqual(set(solution.board["groups"][0]),set([(1,1),(2,1),(3,1)]))
-        self.assertEquals(len(solution.board["runs"]),1)
+        self.assertEqual(len(solution.board["runs"]),1)
 
 
         self.model.restart()
@@ -151,7 +153,7 @@ class RummyTestCase(unittest.TestCase):
         hand = [(1,1),(1,1),(2,1),(2,1),(3,1),(3,1),(4,1)]
         groupSize,solution = solver.totalGroupSize(hand,self.model)
         self.assertEqual(7, groupSize)
-        self.assertEquals(len(solution.board["groups"]),2)
+        self.assertEqual(len(solution.board["groups"]),2)
 
         for _ in range(40):
             self.model.restart()

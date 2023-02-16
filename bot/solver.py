@@ -28,7 +28,7 @@ class RummySolver:
             return 0
 
         hand = self.model.getTotalTilePool() if not quarantine else self.model.getCurrentPlayer().getTilePool()
-        print('Running MaxScore with tiles:\n\t-'+str(hand))
+        print('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
 
         score, solution = self._maxScore(quarantine=quarantine)
         self.solution = RummyModel(self.model)
