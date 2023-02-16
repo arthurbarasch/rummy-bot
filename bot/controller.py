@@ -1,4 +1,3 @@
-from bot.view import RummyView
 from bot.model import *
 from bot.solver import RummySolver
 from flask import request, app

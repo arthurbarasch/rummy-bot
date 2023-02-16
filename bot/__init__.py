@@ -1,6 +1,5 @@
 from bot.model import *
 from bot.controller import *
-from bot.view import *
 from bot.app import startLocalServer
 import logging
 
