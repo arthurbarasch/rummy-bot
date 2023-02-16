@@ -90,7 +90,7 @@ function updateBoardScore(){
 
 function createControlButtons(){
   buttons = []
-  drawTileButton = createButton('Draw tile');
+  let drawTileButton = createButton('Draw tile');
   drawTileButton.mousePressed(drawRandomTile);
   buttons.push(drawTileButton)
 
@@ -99,19 +99,23 @@ function createControlButtons(){
   endMoveButton.addClass('disabled');
   buttons.push(endMoveButton)
 
-  restartButton = createButton('NEW GAME (HUMAN vs AI)');
+  let restartButton = createButton('NEW GAME (HUMAN vs AI)');
   restartButton.addClass('btn-green')
   restartButton.mousePressed(newGame);
-  buttons.push(restartButton)
+  buttons.push(restartButton);
 
-    restartButtonAI = createButton('NEW GAME (AI vs AI)');
+  let restartButtonAI = createButton('NEW GAME (AI vs AI)');
   restartButtonAI.addClass('btn-green')
   restartButtonAI.mousePressed(newGameAI);
   buttons.push(restartButtonAI)
 
-  solveButton = createButton('SOLVE');
+  let solveButton = createButton('SOLVE');
   solveButton.mousePressed(solveTable);
   buttons.push(solveButton)
+
+  let otherSolutionsButton = createButton('OTHER SOLUTIONS');
+  otherSolutionsButton.mousePressed(calculateOtherSolutions);
+  buttons.push(otherSolutionsButton)
 
 //  roiButton = createButton('Select Region of Interest (ROI)');
 //  roiButton.mousePressed(selectRoi);

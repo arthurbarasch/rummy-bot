@@ -44,10 +44,31 @@ function solveTable(){
     let url = '/solve';
     httpGet(url,'json',false,function(data){
         boardModified = false;
-        endMoveButton.addClass('disabled');
+        disableEndMoveButton();
         currMaxScore = data.score
-        solution = JSON.parse(data.solution)
-        print(solution)
+        solution = data
+
+        print('Score array:')
+        print(data.scoreArray)
+    });
+}
+
+let otherSolutions = []
+function calculateOtherSolutions(){
+    if(otherSolutions.length>0){
+        let s = otherSolutions.pop()
+        solution = s[1]
+        currMaxScore = s[0];
+        return;
+    }
+
+
+    let url = '/other-solutions';
+    httpGet(url,'json',false,function(data){
+        boardModified = false;
+        disableEndMoveButton();
+
+        otherSolutions = JSON.parse(data.solutions)
     });
 }
 
@@ -56,7 +77,7 @@ function drawRandomTile(){
     httpGet(url,'json',false,function(){
         print("Draw new tile");
         boardModified = false;
-        endMoveButton.addClass('disabled');
+        disableEndMoveButton();
     })
 }
 
@@ -65,7 +86,7 @@ function newGame(){
     httpGet(url,'json',false,function(){
         print("Board restart");
         boardModified = false;
-        endMoveButton.addClass('disabled');
+        disableEndMoveButton();
     })
 }
 
@@ -74,7 +95,7 @@ function newGameAI(){
     httpGet(url,'json',false,function(){
         print("Board restart");
         boardModified = false;
-        endMoveButton.addClass('disabled');
+        disableEndMoveButton();
     })
 }
 
@@ -84,7 +105,7 @@ function endPlayerMove(){
     httpPost(url,'json',postData,function(data){
         console.log('Board valid? ' +data.valid)
         if(data.valid == "true"){
-            endMoveButton.addClass('disabled');
+            disableEndMoveButton();
         }else{
             displayMessage(data.message, 3000);
         }
@@ -138,4 +159,9 @@ function mouseReleased(){
   }
   selectedTile = createVector(-1,-1);
   updateBoardScore();
+}
+
+
+function disableEndMoveButton(){
+    endMoveButton.addClass('disabled');
 }

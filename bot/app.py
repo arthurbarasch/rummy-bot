@@ -1,7 +1,7 @@
 #https://towardsdatascience.com/video-streaming-in-web-browsers-with-opencv-flask-93a38846fe00
 
 #Import necessary libraries
-from flask import Flask, render_template, Response, request
+from flask import Flask, render_template, Response, request, jsonify
 from threading import Timer
 # import cv2
 import random
@@ -13,6 +13,7 @@ import pytesseract as tess
 from bot.controller import runRummyGame
 from bot.solver import RummySolver
 from bot.model import RummyModel
+import logging
 
 #Initialize the Flask app
 app = Flask(__name__)
@@ -25,21 +26,11 @@ controller = None
 rummyBotSolutions = []
 currSolutionIndex = -1
 
-class RummyDetector:
-    def __init__(self):
-        self.cannyThreshold = 100
-        self.initTesseract()
-        self.frameNr = 0
-        self.roi = 0
-        self.img = 0
 
+# class RummyApp:
+#     def __init__(self):
+#
 
-    # Set the tesseract executable file
-    def initTesseract(self):
-        tess.pytesseract.tesseract_cmd =  'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-
-    def setCanny(self,canny):
-        self.cannyThreshold = canny
 
     # def genFrames(self):
     #     while True:
@@ -60,23 +51,11 @@ class RummyDetector:
     #
 
 
-
-
-rd = RummyDetector()
-
 @app.route('/', methods=['POST', 'GET'])
 def index():
     global controller
-    if request.method == "POST":
-        req = request.form.get("canny")
-        if req:
-            rd.setCanny(int(req))
-    controller = runRummyGame(solve=False)
-    return render_template('index.html')
 
-@app.route('/video_feed')
-def video_feed():
-    return Response(rd.genFrames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return render_template('index.html')
 
 @app.route('/game-state', methods=['POST','GET'])
 def sendGameState():
@@ -86,16 +65,17 @@ def sendGameState():
 
     if controller and controller.model:
         if currSolutionIndex>=0 and currSolutionIndex<len(rummyBotSolutions):
-            return rummyBotSolutions[currSolutionIndex].encodeJSON()
-        return controller.model.encodeJSON()
+            return rummyBotSolutions[currSolutionIndex].encodeJSON(app)
+        return jsonifyModel()
     else:
         return {}
 
-@app.route('/end-move', methods=['POST','GET'])
+@app.route('/end-move', methods=['POST', 'GET'])
 def endMove():
     global controller
     prev = RummyModel(controller.model)
-    valid = controller.model.decodeJSON(request.data)
+    logging.info('Move ended. Server received:{}'.format(str(request.data)))
+    valid = controller.model.decodeJSON(request.data, app)
     print('Player ended move. Board is{} valid'.format(' ' if valid else ' not'))
     message = ''
     if valid:
@@ -115,8 +95,22 @@ def endMove():
 def restart():
     global controller
     global currSolutionIndex
-    controller.model.restart()
-    controller.model.start()
+    controller = runRummyGame(solve=False)
+    currSolutionIndex = -1
+    return {}
+
+@app.route('/other-solutions', methods=['POST','GET'])
+def otherSolutions():
+    global controller
+    solver = RummySolver(controller.model)
+    solver.maxScore()
+    return {'solutions': solver.otherSolutions}
+
+@app.route('/restart-ai', methods=['POST','GET'])
+def restartAI():
+    global controller
+    global currSolutionIndex
+    controller = runRummyGame(solve=False,game_mode=1)
     currSolutionIndex = -1
     return {}
 
@@ -135,9 +129,9 @@ def drawTile():
 
 def nextSolution():
     global currSolutionIndex, rummyBotSolutions
-    currSolutionIndex +=1
-    if currSolutionIndex>=len(rummyBotSolutions):
-        currSolutionIndex=-1
+    currSolutionIndex += 1
+    if currSolutionIndex >= len(rummyBotSolutions):
+        currSolutionIndex = -1
     else:
         print(len(rummyBotSolutions))
         Timer(2, nextSolution).start()
@@ -147,12 +141,27 @@ def solve():
     global controller, rummyBotSolutions
     solver = RummySolver(controller.model)
     score = solver.maxScore()
-    return {'score':score, 'solution': solver.solution.encodeJSON()}
-
-@app.route('/select-roi', methods=['POST','GET'])
-def selectROI():
-    rd.selectROI()
-    return {}
+    return jsonifySolution(score,solver.solution)
 
 def startLocalServer():
     app.run(debug=False)
+
+
+def jsonifyModel():
+    global controller
+    model = controller.model
+    return jsonify(
+        board=model.board,
+        players=[p.tiles for p in model.players],
+        playerTurn=model.playerTurn,
+        drawPileSize=len(model.drawPile)
+    )
+
+def jsonifySolution(score,solution):
+    return jsonify(
+        score=score,
+        board=solution.board,
+        players=[p.tiles for p in solution.players],
+        playerTurn=solution.playerTurn,
+        drawPileSize=len(solution.drawPile)
+    )
