@@ -3,24 +3,41 @@ function httpGetError(){
 }
 
 function updateGameState(){
-    if(frameCount%20==1 && !boardModified && !solution){
+    if(frameCount%30==1 && !boardModified && !solution){
         let url = '/game-state';
         httpGet(url,'json',false,setGameState, httpGetError);
     }
 }
 
 function setGameState(state){
-    board = [];
     if(!state || !state.board) return
-    for(let run of state.board.runs){
-        board.push(...run)
-        board.push('')
+    // for(let run of state.board.runs){
+    //     board.push(...run)
+    //     board.push('')
+    // }
+    //
+    // for(let group of state.board.groups){
+    //     board.push(...group)
+    //     board.push('')
+    // }
+    let arr = [];
+
+    for(let g of state.board){
+        arr.push(...g)
+        arr.push(false)
     }
 
-    for(let group of state.board.groups){
-        board.push(...group)
-        board.push('')
+    for(let i=0; i<COLS;i++){
+        for(let j=0;j<ROWS;j++){
+            if(j*COLS+i>= arr.length) {
+                board[j][i] = false;
+                continue;
+            }
+
+            board[j][i] = arr[j*COLS+i]
+        }
     }
+
 
     lastPlayer = selectedPlayer
     selectedPlayer = state.playerTurn;
@@ -100,7 +117,7 @@ function newGameAI(){
 }
 
 function endPlayerMove(){
-    postData = JSON.stringify({'board': board, 'players': players})
+    postData = JSON.stringify({'board': collectBoardAsArray(), 'players': players})
     let url = '/end-move';
     httpPost(url,'json',postData,function(data){
         console.log('Board valid? ' +data.valid)
@@ -113,59 +130,104 @@ function endPlayerMove(){
     })
 }
 
-
-function keyPressed(){
-    if( keyCode == 32){
-        board.push('')
+function collectBoardAsArray(){
+    let arr = []
+    let space = true
+    for(let i=0;i<COLS*ROWS;i++){
+        let val = board[floor(i/COLS)][i%COLS];
+        if(val){
+            arr.push(val);
+            space = false;
+        }else if(!space){
+            space = true
+            arr.push('')
+        }
     }
+    return arr;
 }
+
+// function keyPressed(){
+//     if( keyCode == 32){
+//         board.push('')
+//     }
+// }
 
 function mousePressed(){
     if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height)return;
+
+    if(selectedTile){
+        boardModified = true;
+
+        newLocation = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY));
+
+        if(newLocation.y>=ROWS)return;
+
+        if(selectedTile.y>=ROWS){
+            //Moved from player tileset
+            let tile = players[selectedPlayer][(selectedTile.y-ROWS)*COLS+selectedTile.x];
+            board[newLocation.y][newLocation.x] = tile?tile.slice():false;
+            players[selectedPlayer][(selectedTile.y-ROWS)*COLS+selectedTile.x] = false;
+
+        }else{
+            //Moved from board
+            temp = board[newLocation.y][newLocation.x]?board[newLocation.y][newLocation.x].slice():false;
+            board[newLocation.y][newLocation.x] = board[selectedTile.y][selectedTile.x]?board[selectedTile.y][selectedTile.x].slice():false;
+            board[selectedTile.y][selectedTile.x] = temp;
+        }
+        enableEndMoveButton();
+        selectedTile = undefined;
+
+        updateBoardScore()
+        return;
+    }
+
 
     selectedTile = createVector(floor(mouseX/sizeX), floor(mouseY/sizeY));
     if(selectedTile.x <0 || selectedTile.x>COLS || selectedTile.y <0 || selectedTile.y>ROWS ){
         selectedTile = createVector(-1,-1)
     }
-    boardModified = true;
 }
-
-function mouseReleased(){
-    if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height)return;
-
-  let newTileLocation = createVector(floor(mouseX/sizeX),floor(mouseY/sizeY))
-  if(newTileLocation.y>=ROWS){ //Moved to player tileset
-    let index = (newTileLocation.y-ROWS)*COLS+newTileLocation.x;
-    let tileValue;
-
-    //Moved from player tileset (cannot move from board as to satisfy table contraint)
-    if(selectedTile.y>=ROWS){
-      tileValue = players[selectedPlayer][(selectedTile.y-ROWS)*COLS+selectedTile.x]
-      players[selectedPlayer].splice((selectedTile.y-ROWS)*COLS+selectedTile.x,1) //Remove from player's tileset
-      players[selectedPlayer].splice(index,0,tileValue); //Add to player tileset
-    }
-  }else{
-    let index = newTileLocation.y*COLS+newTileLocation.x;
-    let tileValue;
-
-    //Moved from player tileset
-    if(selectedTile.y>=ROWS){
-      tileValue = players[selectedPlayer][selectedTile.y-ROWS+selectedTile.x]
-      players[selectedPlayer].splice(selectedTile.y-ROWS+selectedTile.x,1) //Remove from player's tileset
-
-    // Moved from board tileset
-    }else{
-      tileValue = board[selectedTile.y*COLS+selectedTile.x]
-      board.splice(selectedTile.y*COLS+selectedTile.x,1) //Remove from board tileset
-    }
-    endMoveButton.removeClass('disabled');
-    board.splice(index,0,tileValue); //Add to board tileset
-  }
-  selectedTile = createVector(-1,-1);
-  updateBoardScore();
-}
+//
+// function mouseReleased(){
+//     if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height)return;
+//
+//   let newTileLocation = createVector(floor(mouseX/sizeX),floor(mouseY/sizeY))
+//   if(newTileLocation.y>=ROWS){ //Moved to player tileset
+//     let index = (newTileLocation.y-ROWS)*COLS+newTileLocation.x;
+//     let tileValue;
+//
+//     //Moved from player tileset (cannot move from board as to satisfy table contraint)
+//     if(selectedTile.y>=ROWS){
+//       tileValue = players[selectedPlayer][(selectedTile.y-ROWS)*COLS+selectedTile.x]
+//       players[selectedPlayer].splice((selectedTile.y-ROWS)*COLS+selectedTile.x,1) //Remove from player's tileset
+//       players[selectedPlayer].splice(index,0,tileValue); //Add to player tileset
+//     }
+//   }else{
+//     let index = newTileLocation.y*COLS+newTileLocation.x;
+//     let tileValue;
+//
+//     //Moved from player tileset
+//     if(selectedTile.y>=ROWS){
+//       tileValue = players[selectedPlayer][selectedTile.y-ROWS+selectedTile.x]
+//       players[selectedPlayer].splice(selectedTile.y-ROWS+selectedTile.x,1) //Remove from player's tileset
+//
+//     // Moved from board tileset
+//     }else{
+//       tileValue = board[selectedTile.y*COLS+selectedTile.x]
+//       board.splice(selectedTile.y*COLS+selectedTile.x,1) //Remove from board tileset
+//     }
+//     endMoveButton.removeClass('disabled');
+//     board.splice(index,0,tileValue); //Add to board tileset
+//   }
+//   selectedTile = createVector(-1,-1);
+//   updateBoardScore();
+// }
 
 
 function disableEndMoveButton(){
     endMoveButton.addClass('disabled');
+}
+
+function enableEndMoveButton(){
+    endMoveButton.removeClass('disabled');
 }

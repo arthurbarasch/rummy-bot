@@ -83,6 +83,8 @@ def endMove():
         elif len(controller.model.getBoardTilePool()) == len(prev.getBoardTilePool()):
             message = 'Cannot end move without placing any tiles'
             controller.init(prev)
+        elif controller.checkWinCondition() is not False:
+            message = 'GAME OVER! Player {} won!'.format(controller.checkWinCondition()+1)
         else:
             controller.model.getCurrentPlayer().quarantine = False
             Timer(1.0, controller.nextPlayer).start()
@@ -152,7 +154,7 @@ def jsonifyModel():
     global controller
     model = controller.model
     return jsonify(
-        board=model.board,
+        board=model.getBoardAsArray(),
         players=[p.tiles for p in model.players],
         playerTurn=model.playerTurn,
         drawPileSize=len(model.drawPile)
@@ -167,7 +169,7 @@ def jsonifySolution(score,solution,scoreArray):
 
     return jsonify(
         score=score if score > 0 else -999,
-        board=solution.board,
+        board=solution.getBoardAsArray(),
         players=[p.tiles for p in solution.players],
         playerTurn=solution.playerTurn,
         drawPileSize=len(solution.drawPile),

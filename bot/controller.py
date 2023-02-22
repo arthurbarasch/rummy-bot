@@ -20,6 +20,12 @@ class RummyController:
         self.model = model
         self.solver = RummySolver(self.model)
 
+    def checkWinCondition(self):
+        for i in range(NUM_PLAYERS):
+            if len(self.model.players[i]) == 0:
+                return i
+        return False
+
     def start(self):
         self.model.start()
 
@@ -74,8 +80,9 @@ def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     model = RummyModel()
     controller = RummyController(model, game_mode=game_mode)
     controller.model.start()
-    # controller.model.getCurrentPlayer().extend([(1, 10), (2, 10), (3, 10),(3, 10)])
-    # controller.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 3), (1, 4), (1, 5)])
+    # controller.model.addRun([(1,1),(1,2),(1,3)])
+    # controller.model.getCurrentPlayer().extend([(1, 10),(2, 10),(3, 10)])
+    # controller.model.players[1].append((4,10))
 
     #controller.model.getCurrentPlayer().extend([(2, 4), (2, 5), (2, 6), (2, 7),(2,7)])
     #controller.model.getCurrentPlayer().extend([(2, 4), (2, 5), (2, 6), (2, 7), (2, 8)])

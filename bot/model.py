@@ -384,8 +384,10 @@ class RummyModel:
             for i, tiles in enumerate(data['players']):
                 self.players[i].clearTiles()
                 for tile in tiles:
+                    if not tile:
+                        continue;
                     # Frontend returns tiles as lists instead of tuple, make conversion
-                    self.players[i].append((tile[0],tile[1]))
+                    self.players[i].append((tile[0], tile[1]))
 
             assert len(self.players) == NUM_PLAYERS
             return True

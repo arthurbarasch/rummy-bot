@@ -20,7 +20,7 @@ var board = [];
 var players = [[],[]];
 var drawPileSize = 0;
 var selectedPlayer = 0;
-var selectedTile;
+var selectedTile = undefined;
 var boardModified = false;
 
 
@@ -31,12 +31,17 @@ function setup() {
   let cnv = createCanvas(windowWidth*0.55, 550);
   cnv.parent('canvas-container')
   createControlButtons();
-
-  selectedTile = createVector(-1,-1);
   textAlign(CENTER);
   rectMode(CENTER);
   textSize(24);
   stroke('#bbbbbb')
+
+    for(let i=0; i<COLS;i++){
+        board.push([])
+        for(let j=0;j<ROWS;j++){
+            board[i].push(false);
+        }
+    }
 }
 
 function draw() {
@@ -64,6 +69,18 @@ function draw() {
   }
   displayPlayerTiles();
   displayMessages();
+  displayMouseTileSlot();
+}
+
+function displayMouseTileSlot(){
+    if(selectedTile){
+      push();
+      translate(floor(mouseX/sizeX)*sizeX, floor(mouseY/sizeY)*sizeY);
+      translate(sizeX/2,sizeY/2)
+      fill(205,50)
+      rect(0,0, sizeX, sizeY, 10);
+      pop();
+    }
 }
 
 function displaySolution(){
@@ -80,9 +97,9 @@ function displaySolution(){
 
 function updateBoardScore(){
     boardScore = 0
-    for(let tile of board){
-        if(tile && tile != ''){
-            boardScore+=tile[1]
+    for(let i=0; i<COLS;i++){
+        for(let j=0;j<ROWS;j++){
+            boardScore += board[j][i]?board[j][i][1]:0;
         }
     }
 }
@@ -160,58 +177,42 @@ function displayPlayerTiles(){
     pop();
 }
 
-var currentGroupLength = 0;
 function displayBoardTiles(){
   push();
-  translate(sizeX/2, sizeY/2)
-  let imagePointer = createVector(0,0);
-  for(let i=0;i<board.length;i++){
-    if(keyCode == 32 && i == board.length-1){
-        drawTile('', imagePointer)
-    }
-
-    if(board[i]!=''){
-       drawTile(board[i],imagePointer);
-    }else{
-        let nextSpace=i;
-        while((board[nextSpace]!='' && nextSpace+1<=board.length) || nextSpace == i){
-            nextSpace++;
-        }
-        currentGroupLength = nextSpace-i;
-        if(imagePointer.x+currentGroupLength>COLS){
-            imagePointer.x = 0
-            imagePointer.y++;
-            continue;
+  translate(sizeX/2,sizeY/2)
+  for(let i=0; i<COLS;i++){
+    for(let j=0;j<ROWS;j++){
+        if(board[j][i]){
+            drawTile(board[j][i],createVector(i,j))
         }
     }
-    imagePointer.x++;
   }
+
   pop();
 }
 
 function drawTile(tile,pos){
     push();
-    if(!tile || tile==''){
+    if(!tile){
         translate(pos.x*sizeX, pos.y*sizeY);
-        fill(205,50)
+        fill(205,50);
         rect(0,0, sizeX, sizeY, 10);
-        pop()
+        pop();
         return;
     }
 
     if(mouseX>pos.x*sizeX && mouseX<(pos.x+1)*sizeX &&
         mouseY>pos.y*sizeY && mouseY<(pos.y+1)*sizeY){
 
-        if(selectedTile.x>=0){
+        if(selectedTile){
           push();
           translate(pos.x*sizeX, pos.y*sizeY);
           fill(205,50)
           rect(0,0, sizeX, sizeY, 10);
           pop();
-          pos.x++;
         }
         strokeWeight(3);
-    }else if(selectedTile.x==pos.x && selectedTile.y==pos.y){
+    }else if(selectedTile && selectedTile.x==pos.x && selectedTile.y==pos.y){
         strokeWeight(3);
         stroke('red');
     }else{
@@ -223,8 +224,6 @@ function drawTile(tile,pos){
         fill(suits[tile[0]-1])
         noStroke();
         text(tile[1],0,0);
-    }else{
-        text('J',0,0);
     }
     pop();
 }
