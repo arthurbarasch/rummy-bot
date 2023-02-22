@@ -64,8 +64,6 @@ def sendGameState():
     global rummyBotSolutions
 
     if controller and controller.model:
-        if currSolutionIndex>=0 and currSolutionIndex<len(rummyBotSolutions):
-            return rummyBotSolutions[currSolutionIndex].encodeJSON(app)
         return jsonifyModel()
     else:
         return {}
@@ -79,8 +77,11 @@ def endMove():
     print('Player ended move. Board is{} valid'.format(' ' if valid else ' not'))
     message = ''
     if valid:
-        if controller.model.getCurrentPlayer().quarantine and prev.getBoardScore()+30 > controller.model.getBoardScore():
+        if controller.model.getCurrentPlayer().quarantine and controller.model.getBoardScore()-prev.getBoardScore() < 30:
             message = 'You need to place 30 points down in one round to exit quarantine'
+            controller.init(prev)
+        elif len(controller.model.getBoardTilePool()) == len(prev.getBoardTilePool()):
+            message = 'Cannot end move without placing any tiles'
             controller.init(prev)
         else:
             controller.model.getCurrentPlayer().quarantine = False
@@ -104,7 +105,7 @@ def otherSolutions():
     global controller
     solver = RummySolver(controller.model)
     solver.maxScore()
-    return {'solutions': solver.otherSolutions}
+    return jsonify(solutions=solver.otherSolutions)
 
 @app.route('/restart-ai', methods=['POST','GET'])
 def restartAI():
@@ -141,7 +142,7 @@ def solve():
     global controller, rummyBotSolutions
     solver = RummySolver(controller.model)
     score = solver.maxScore()
-    return jsonifySolution(score,solver.solution)
+    return jsonifySolution(score,solver.solution,solver.score)
 
 def startLocalServer():
     app.run(debug=False)
@@ -157,11 +158,18 @@ def jsonifyModel():
         drawPileSize=len(model.drawPile)
     )
 
-def jsonifySolution(score,solution):
+def jsonifySolution(score,solution,scoreArray):
+    arr = []
+    for valArray in scoreArray:
+        arr.append([])
+        for scores in valArray.values():
+            arr[-1].append((scores[0] if scores[0] >= 0 else -999, scores[1].getBoardAsArray()))
+
     return jsonify(
-        score=score,
+        score=score if score > 0 else -999,
         board=solution.board,
         players=[p.tiles for p in solution.players],
         playerTurn=solution.playerTurn,
-        drawPileSize=len(solution.drawPile)
+        drawPileSize=len(solution.drawPile),
+        scoreArray=arr
     )

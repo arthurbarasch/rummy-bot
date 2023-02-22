@@ -59,6 +59,7 @@ function calculateOtherSolutions(){
         let s = otherSolutions.pop()
         solution = s[1]
         currMaxScore = s[0];
+        print('NEXT SOLUTION')
         return;
     }
 
@@ -67,7 +68,6 @@ function calculateOtherSolutions(){
     httpGet(url,'json',false,function(data){
         boardModified = false;
         disableEndMoveButton();
-
         otherSolutions = JSON.parse(data.solutions)
     });
 }

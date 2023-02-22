@@ -134,6 +134,11 @@ class RummyModel:
         if 0 <= self.playerTurn < len(self.players):
             return self.players[self.playerTurn]
 
+    def getBoardAsArray(self):
+        arr = [r[:] for r in self.board['runs']]
+        arr.extend([g[:] for g in self.board['groups']])
+        return arr
+
     def getBoardTilePool(self, filter_value=None):
         temp = []
         for run in self.board.get('runs'):
@@ -162,16 +167,26 @@ class RummyModel:
             temp.extend(p.tiles)
         return temp
 
-    # Check to see if current model satisfies the table constraint (defined by 'board' parameter)
-    # i.e. check whether all tiles that were present in 'previous' board, are also present in current board
+    # Check to see if current model and 'runs' array satisfy the table constraint (defined by 'board' parameter)
+    # i.e. check whether all tiles that were present in 'previous' board, are also present in current board,
+    # or in unfinished runs
     # Params:
     # value - if specified, only check table constraint for tiles of that value
-    def checkTableConstraint(self, previousModel, filter_value=None):
+    def checkTableConstraint(self, previousModel, runs, filter_value=None):
         temp = previousModel.getBoardTilePool(filter_value=filter_value)
-        for tile in self.getBoardTilePool(filter_value):
-            if tile in temp:
-                temp.remove(tile)
-        return len(temp) == 0
+
+        # Tiles present on the board (in groups or runs)
+        for t in self.getBoardTilePool(filter_value=filter_value):
+            if t in temp:
+                temp.remove(t)
+
+        # # Tiles present on unfinished runs
+        for t in temp:
+            suit, value = t
+            if runs[suit-1][0] == 0 and runs[suit-1][0] == 0:
+                return False
+
+        return True
 
     def isGameOver(self):
         if self.drawPile == 0:
@@ -252,8 +267,9 @@ class RummyModel:
         self.board["runs"].append([tile])
 
     # Adds the input tile to an available run available
-    # If two available runs for such tile, use the input value M to establish priority
-    def addToRun(self, tile, M):
+    # If two available runs for such tile, use the input value 'isLongest' to establish which run
+    # to add the tile to (the longest or shortest run)
+    def addToRun(self, tile, isLongest):
         run1 = None
         run2 = None
 
@@ -273,12 +289,12 @@ class RummyModel:
 
         if run1 is not None and run2 is not None:
             if len(run1) >= len(run2):
-                if M == 0:
+                if isLongest:
                     run1.append(tile)
                 else:
                     run2.append(tile)
             else:
-                if M == 0:
+                if isLongest:
                     run2.append(tile)
                 else:
                     run1.append(tile)

@@ -1,11 +1,10 @@
 from bot.model import *
 from bot.solver import RummySolver
-from flask import request, app
 import time
 from threading import Timer
 
 GAME_MODE = {'HUMAN vs. AI': 0, 'AI vs. AI': 1}
-BOT_MOVE_DELAY = 1.2
+BOT_MOVE_DELAY = 0.7
 
 
 class RummyController:
@@ -32,10 +31,10 @@ class RummyController:
                     self.model.playerTurn))
             action = action[0].capitalize()
 
-        if (action == 'A'):
+        if action == 'A':
             self.model.drawTile(self.model.playerTurn)
 
-        if (action == 'B'):
+        if action == 'B':
             while action != 's':
                 action = input('')
         self.model.nextPlayer()
@@ -49,13 +48,18 @@ class RummyController:
            self.model.playerTurn == self.botPlayer) and not self.model.isGameOver():
             Timer(1.5 * BOT_MOVE_DELAY, self.makeMoveBot).start()
 
+    def isValidMove(self, old, new):
+        oldScore = old.getBoardScore()
+        newScore = new.getBoardScore()
+        return newScore != oldScore and newScore > 0 and (
+                newScore-oldScore >= 30 or not self.model.players[self.botPlayer].quarantine) and old.getBoardAsArray() != new.getBoardAsArray()
+
+
     def makeMoveBot(self):
-        prev_score = self.model.getBoardScore()
         self.solver = RummySolver(self.model)
         score = self.solver.maxScore(quarantine=self.model.players[self.botPlayer].quarantine)
 
-        if score != self.model.getBoardScore() and score > 0 and (
-                score >= 30 + prev_score or not self.model.players[self.botPlayer].quarantine):
+        if self.isValidMove(self.model, self.solver.solution):
             print('RummyBot making moves on the board (best possible score is {})\n'.format(score))
             self.model = RummyModel(self.solver.solution)
             self.model.players[self.botPlayer].quarantine = False
@@ -70,11 +74,11 @@ def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     model = RummyModel()
     controller = RummyController(model, game_mode=game_mode)
     controller.model.start()
-    # controller.model.getCurrentPlayer().extend([(1,11),(1,12),(1,13)])
-    # controller.model.getCurrentPlayer().extend([(1,1),(2,1),(3,1)])
-    # controller.model.getCurrentPlayer().extend([(1, 2), (1, 3),(1, 4)])
+    # controller.model.getCurrentPlayer().extend([(1, 10), (2, 10), (3, 10),(3, 10)])
+    # controller.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 3), (1, 4), (1, 5)])
 
-    # controller.model.getCurrentPlayer().extend([(2, 4), (2, 5), (2, 6), (2, 7),(2,7)])
+    #controller.model.getCurrentPlayer().extend([(2, 4), (2, 5), (2, 6), (2, 7),(2,7)])
+    #controller.model.getCurrentPlayer().extend([(2, 4), (2, 5), (2, 6), (2, 7), (2, 8)])
 
     if solve:
         # Insert example game states here
