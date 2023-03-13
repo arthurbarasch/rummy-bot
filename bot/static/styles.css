@@ -9,7 +9,7 @@ body{
 }
 
 .btn{
-    width:100%;
+    width:100% !important;
 }
 
 .container{
@@ -61,6 +61,5 @@ textarea{
 }
 
 #controls{
-    max-width:200px;
-    display: flexbox;
+    padding: 10px;
 }

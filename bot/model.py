@@ -76,6 +76,7 @@ class RummyModel:
         previous = RummyModel(self)
         self.board = model.board
         tiles = self.compareModels(previous)
+
         logging.warning("Copying solution from board score {} to board score {} ({} player tiles used this round)".format(previous.getBoardScore(), self.getBoardScore(),len(tiles)))
         self.players[self.playerTurn] = tiles
         self.correctDrawPile()

@@ -23,6 +23,14 @@ function setGameState(state){
     let arr = [];
 
     for(let g of state.board){
+        if((arr.length%COLS)+g.length >= COLS){
+            let n = COLS-(arr.length%COLS)
+            while(n>0){
+                arr.push(false);
+                n--;
+            }
+        }
+
         arr.push(...g)
         arr.push(false)
     }
@@ -145,12 +153,6 @@ function collectBoardAsArray(){
     }
     return arr;
 }
-
-// function keyPressed(){
-//     if( keyCode == 32){
-//         board.push('')
-//     }
-// }
 
 function mousePressed(){
     if(mouseX<0 || mouseX>width || mouseY<0 || mouseY>height)return;

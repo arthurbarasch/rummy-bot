@@ -29,22 +29,6 @@ class RummyController:
     def start(self):
         self.model.start()
 
-    def promptAction(self):
-        action = ''
-        while action != 'A' and action != 'B':
-            action = input(
-                '\nPlayer {}, choose an action:\n-------------------\n\nA. Draw tile\nB. Make moves\n'.format(
-                    self.model.playerTurn))
-            action = action[0].capitalize()
-
-        if action == 'A':
-            self.model.drawTile(self.model.playerTurn)
-
-        if action == 'B':
-            while action != 's':
-                action = input('')
-        self.model.nextPlayer()
-
     def runSolver(self):
         return self.solver.maxScore()
 
@@ -59,7 +43,6 @@ class RummyController:
         newScore = new.getBoardScore()
         return newScore != oldScore and newScore > 0 and (
                 newScore-oldScore >= 30 or not self.model.players[self.botPlayer].quarantine) and old.getBoardAsArray() != new.getBoardAsArray()
-
 
     def makeMoveBot(self):
         self.solver = RummySolver(self.model)
@@ -80,12 +63,7 @@ def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     model = RummyModel()
     controller = RummyController(model, game_mode=game_mode)
     controller.model.start()
-    # controller.model.addRun([(1,1),(1,2),(1,3)])
-    # controller.model.getCurrentPlayer().extend([(1, 10),(2, 10),(3, 10)])
-    # controller.model.players[1].append((4,10))
-
-    #controller.model.getCurrentPlayer().extend([(2, 4), (2, 5), (2, 6), (2, 7),(2,7)])
-    #controller.model.getCurrentPlayer().extend([(2, 4), (2, 5), (2, 6), (2, 7), (2, 8)])
+    # controller.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 2), (1, 3), (1, 4)])
 
     if solve:
         # Insert example game states here
