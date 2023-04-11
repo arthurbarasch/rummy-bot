@@ -7,7 +7,9 @@ import numpy as np
 
 
 class RummySolver:
+
     def __init__(self, model: RummyModel):
+        self.CONFIG = {'output_graph': True}
         self.model = model
         self.score = []
         self.counter = []
@@ -15,6 +17,8 @@ class RummySolver:
             self.score.append(dict())
             self.counter.append(0)
         self.solution = None
+
+        self.graph = ''
 
         self.otherSolutions = []
 
@@ -24,6 +28,65 @@ class RummySolver:
     def displayCounter(self):
         for i, c in enumerate(self.counter):
             print(str(i+1) + '. ' + '*' * c)
+
+    def exportGraphTree(self):
+        print('Exporting graph ')
+
+        for i in range(n):
+            arr = [ str(i+1)+'.'+k for k in list(self.score[i].keys())]
+            self.graph += '{rank=same; '+' '.join(arr)+'}\n'
+
+        self.graph = 'digraph Rummy {\nrankdir="TB"\nnodesep=0.4;\nranksep=0.5;\n'+\
+                     self.graph+\
+                     '\n}'
+        with open('output/graph.dot', 'w') as f:
+            print(self.graph , file=f)  # Python 3.x
+
+    def getIntermediateSolution(self,solution:RummyModel,runsHash,value):
+        arr = solution.getBoardAsArray()
+        multisets = self.getMultisetFromHash(runsHash)
+
+        # Add tiles in unfinished runs
+        for i in range(k):
+            n = multisets[i][1]
+            while n>0:
+                arr.append([(i+1,value)])
+                n-=1
+
+            n = multisets[i][2]
+            while n>0:
+                arr.append([(i+1,value-1),(i+1,value)])
+                n-=1
+
+        # Change formatting to HTML for .dot
+        if len(arr) == 0:
+            return '"[]"'
+
+        dotStr = '<'
+        colors = ['black', 'blue', 'orange', 'red']
+
+        first = True
+        for a in arr:
+            if first:
+                first = False
+            else:
+                dotStr += '-'
+
+            firstTile = True
+            for tile in a:
+                if firstTile:
+                    firstTile = False
+                else:
+                    dotStr += ','
+                dotStr += '<FONT COLOR="{}">{}</FONT>'.format(colors[tile[0]-1], tile[1])
+
+        dotStr += '>'
+
+        return dotStr
+    def addToGraphTree(self, value, oldRuns, newRuns, solution:RummyModel):
+        newHash = self.getRunHash(newRuns)
+        self.graph += '{0}.{1} -> {2}.{3}\n{2}.{3} [label={4}]\n'.format(value,oldRuns,value+1,newHash, self.getIntermediateSolution(solution,newHash,value))
+
     def maxScore(self, quarantine=False):
         if len(self.model.getTotalTilePool()) < 3:
             self.solution = RummyModel(self.model)
@@ -36,6 +99,7 @@ class RummySolver:
         self.solution = RummyModel(self.model)
         self.solution.copySolution(solution)
         self.displayCounter()
+        self.exportGraphTree()
         return score
 
     def _maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel(), quarantine=False):
@@ -81,7 +145,9 @@ class RummySolver:
             logging.debug(
                 '~~~~~~~~~~~~~* DEBUG STRING *~~~~~~~~~~~\n' + debugStr + ' \tgroupscores:{}\tsolution:\n{}\n'.format(
                     groupScores, new_solution))
-            # assert groupScores <= new_solution.getBoardScore()
+
+            if self.CONFIG['output_graph']:
+                self.addToGraphTree(value,runHash, new_runs[i], new_solution)
 
             # Check the table constraint with the previous model
             if new_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
@@ -95,11 +161,11 @@ class RummySolver:
 
                 # If new-found result is bigger than the one being stored in the score array, save it
                 if runHash not in self.score[value - 1] or result >= self.score[value - 1][runHash][0]:
-                    self.score[value - 1][runHash] = (result, RummyModel(new_solution))
+                    self.score[value - 1][runHash] = (result, new_solution)
             else:
                 result = "-inf (doesn't satisfy table constraint) "
                 if runHash not in self.score[value - 1]:
-                    self.score[value - 1][runHash] = (-math.inf, RummyModel(new_solution))
+                    self.score[value - 1][runHash] = (-math.inf, new_solution)
 
 
             assert groupScores >= 0
@@ -152,6 +218,7 @@ class RummySolver:
             ret = {'new_runs': [], 'new_hands': [], 'run_scores': [], "solutions": []}
             return
 
+
         if tilesAvailable == 2:
             new_runs = np.array(runs)
             new_solution = RummyModel(solution)
@@ -161,14 +228,8 @@ class RummySolver:
                 new_score += self.updateRun(new_runs, searchTile, j, new_solution)
                 new_hand.remove((suit, value))
 
-            print('FOUND U {}: \n{}'.format(str(new_solution),new_runs[suit - 1]))
             # Recursion over suits
             self.makeNewRun(new_hand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
-
-            # sol = ['\n\t-runVal ' + str(ret['run_scores'][i])+'\t'+ str(ret['solutions'][i]) for i in range(len(ret['run_scores']))]
-            # print('SOLUTIONS\n\t-RUNS={}'.format(str(runs[0]))+reduce(lambda x,y: x+y,sol,''))
-            # print('Value {} and ret is:\n{}'.format(value, ret))
-
 
         if tilesAvailable >= 1:
             # If the runs value of both m=1 and m=2 are equal, there is no need
@@ -188,10 +249,13 @@ class RummySolver:
                 # Recursion over suits
                 self.makeNewRun(new_hand, new_runs, (suit + 1, value), new_solution, ret, run_scores + new_score)
 
+
         # An extra possibility of no tiles of this sort being used for runs
-        runs[suit - 1][0] = 0
-        runs[suit - 1][1] = 0
-        self.makeNewRun(hand, runs, (suit + 1, value), RummyModel(solution), ret, run_scores)
+        new_runs = np.array(runs)
+        new_runs[suit - 1][0] = 0
+        new_runs[suit - 1][1] = 0
+        self.makeNewRun(hand[:], new_runs, (suit + 1, value), RummyModel(solution), ret, run_scores)
+
 
     # (Destructive method) Updates the runs array given input tile and value of m, and returns the score added
     # Also, keeps track of tiles used in the solution
@@ -217,7 +281,7 @@ class RummySolver:
         elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
 
             isLongest = runs[suit - 1, M] > runs[suit-1, (M+1) % 2]
-            assert solution.addToRun(tile, isLongest)
+            assert solution.addToRun(tile, not isLongest)
             return value
 
     # Return the total group size that can be formed from the given 'hand'
@@ -274,7 +338,7 @@ class RummySolver:
         for i in range(k):
             multiset = {0: 0, 1: 0, 2: 0, 3: 0}
             for j in range(s+1):
-                multiset[j] = hash[(i*k)+j]
+                multiset[j] = int(hash[(i*k)+j])
 
             multisets.append(multiset)
         return multisets

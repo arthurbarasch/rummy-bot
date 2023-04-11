@@ -133,10 +133,11 @@ class RummyModel:
 
     def getCurrentPlayer(self):
         if 0 <= self.playerTurn < len(self.players):
-            return self.players[self.playerTurn]
+             return self.players[self.playerTurn]
 
     def getBoardAsArray(self):
         arr = [r[:] for r in self.board['runs']]
+
         arr.extend([g[:] for g in self.board['groups']])
         return arr
 
