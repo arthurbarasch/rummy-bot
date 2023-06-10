@@ -164,8 +164,8 @@ def jsonifySolution(score,solution,scoreArray):
     arr = []
     for valArray in scoreArray:
         arr.append([])
-        for scores in valArray.values():
-            arr[-1].append((scores[0] if scores[0] >= 0 else -999, scores[1].getBoardAsArray()))
+        for score in valArray:
+            arr[-1].append((score if score >= 0 else -999, [])) # TODO
 
     return jsonify(
         score=score if score > 0 else -999,

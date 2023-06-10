@@ -16,6 +16,23 @@ class RummyTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         super().tearDown()
 
+    def test_scores(self):
+        self.model.restart()
+        self.model.addGroup([(1, 5), (2, 5), (3, 5)])
+        solver = RummySolver(self.model)
+        self.assertEqual(solver.maxScore(), 15)
+
+        self.model.restart()
+        self.model.getCurrentPlayer().extend([(1, 10), (3, 10), (4, 10),
+                                              (1, 2), (1, 3), (1, 4)])
+        solver = RummySolver(self.model)
+        self.assertEqual(39, solver.maxScore())
+
+        self.model.restart()
+        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 3)])
+        solver = RummySolver(self.model)
+        self.assertEqual(18, solver.maxScore())
+
     # Model Tests
     def test_copy_models(self):
         self.model.restart()
@@ -141,11 +158,8 @@ class RummyTestCase(unittest.TestCase):
         self.model.addRun([(1, 10), (1, 11), (1, 12)])
         solver = RummySolver(self.model)
         hand = [(1, 1), (1, 1), (2, 1), (2, 1), (3, 1)]
-        groupSize, solution = solver.totalGroupSize(hand, self.model)
+        groupSize = solver.totalGroupSize(hand)
         self.assertEqual(3, groupSize)
-        self.assertEqual(len(solution.board["groups"]), 1)
-        self.assertEqual(set(solution.board["groups"][0]), {(1, 1), (2, 1), (3, 1)})
-        self.assertEqual(len(solution.board["runs"]), 1)
 
         self.model.restart()
         self.model.addRun([(1, 1), (1, 2), (1, 3)])
@@ -285,7 +299,6 @@ class RummyTestCase(unittest.TestCase):
     #     self.model.giveAllTilesToCurrentPlayer()
     #     solver = RummySolver(self.model)
     #     self.assertEqual(728, solver.maxScore())
-
 
 if __name__ == '__main__':
     unittest.main()

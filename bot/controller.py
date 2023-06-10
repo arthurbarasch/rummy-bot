@@ -30,6 +30,7 @@ class RummyController:
         self.model.start()
 
     def runSolver(self):
+        self.solver = RummySolver(self.model)
         return self.solver.maxScore()
 
     def nextPlayer(self):
