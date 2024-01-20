@@ -162,10 +162,12 @@ def jsonifyModel():
 
 def jsonifySolution(score,solution,scoreArray):
     arr = []
-    for valArray in scoreArray:
-        arr.append([])
-        for score in valArray:
-            arr[-1].append((score if score >= 0 else -999, [])) # TODO
+
+    # print('&& SCORE = '+score)
+    # for valArray in scoreArray:
+    #     arr.append([])
+    #     for score in valArray:
+    #         arr[-1].append((score if score >= 0 else -999, [])) # TODO
 
     return jsonify(
         score=score if score > 0 else -999,
@@ -173,5 +175,5 @@ def jsonifySolution(score,solution,scoreArray):
         players=[p.tiles for p in solution.players],
         playerTurn=solution.playerTurn,
         drawPileSize=len(solution.drawPile),
-        scoreArray=arr
+        scoreArray=[]
     )

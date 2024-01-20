@@ -156,7 +156,7 @@ class RummyModel:
     #     so only return available tiles of that value, of any suit (useful for MaxScore)
     def getTotalTilePool(self, filter_value=None):
         temp = self.getBoardTilePool()
-        temp.extend(self.getCurrentPlayer()[:])
+        temp.extend(self.getCurrentPlayer().tiles[:])
         if filter_value is not None:
             return list(filter(lambda tile: tile[1] == filter_value, temp))
         else:

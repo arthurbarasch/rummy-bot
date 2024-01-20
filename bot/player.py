@@ -42,6 +42,8 @@ class RummyPlayer(list):
         return item in self.tiles
 
     def __getitem__(self, key):
+        if len(self.tiles) <= key:
+            return None
         return self.tiles[key]
 
     def __len__(self):
