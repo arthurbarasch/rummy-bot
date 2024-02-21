@@ -141,7 +141,7 @@ class RummySolver:
         self.displayCounter()
 
         if self.CONFIG['output_graph']:
-            self.exportScoreHeatmap()
+            # self.exportScoreHeatmap()
             self.exportGraphTree()
         return int(score)
 
@@ -314,6 +314,10 @@ class RummySolver:
     def setScoreFromRuns(self, score, value, runs=np.zeros(shape=(k,m))):
         for i in range(k):
             temp = sorted(runs[i])
+
+            if value == 1:
+                print('value is 1 '+str(temp))
+
             for j in range(f_of_m):
                 if np.array_equal(temp, RUN_CONFIGS[j]):
                     self.score[value-1][i][j] = score
@@ -360,7 +364,7 @@ class RummySolver:
 
     def traceSolution(self):
         solution = RummyModel()
-        prevRuns = np.zeros((k,m))
+        prevRuns = np.zeros(shape=(k,m))
 
         tilePool = self.model.getTotalTilePool()
 
@@ -371,29 +375,34 @@ class RummySolver:
 
             # Loop through k
             for K in range(k):
+                print('SCORE ->\n'+str(self.score[N][K]))
                 i = np.argmax(self.score[N][K])
                 val = self.score[N][K][i]
                 if maxScore == val or K == 0:
                     maxScore = val
                     indexes[K] = i
 
+            # print('IND->\n'+str(indexes))
             runs = self.getRunsFromIndexes(indexes)
-            print('RUNS->\n'+str(runs))
+            # print('RUNS->\n'+str(runs))
             for K in range(k):
                 for M in range(m):
                     if runs[K][M] > 0:
-                        print('TESTING')
-                        tilePool.remove((K+1, N))
+                        tilePool.remove((K+1, N+1))
 
-                    print('#### ({}) k - {} \t m - {} ####'.format(runs[K][M],K,M))
+                    # print('#### ({}) k - {} \t m - {} ####'.format(runs[K][M],K,M))
 
+                    # if K == 0:
+                    #     print(f'{N+1}{runs[K][M]}')
+                    if runs[K][M] >= 2:
+                        print('%% IN TRACE SOLUTION %%\nPREV RUN\n'+str(prevRuns[K][M])+'\nRUN'+str(runs[K][M])+'\n\n')
                     if prevRuns[K][M] == 2 and runs[K][M] == 3:
-                        solution.addRun([(K+1, N-2), (K+1, N-1), (K+1, N)])  # Add the new run
+                        solution.addRun([(K+1, N-1), (K+1, N), (K+1, N+1)])  # Add the new run
 
                     if prevRuns[K][M] == 3 and runs[K][M] == 3:
-                        solution.addToRun((K+1, N))
+                        solution.addToRun((K+1, N+1))
 
-            groupTiles = list(filter(lambda x: x[1] == N, tilePool))
+            groupTiles = list(filter(lambda x: x[1] == N+1 , tilePool))
             g1 = list(set(groupTiles))
             g2 = groupTiles[:]
             for tile in g1:
