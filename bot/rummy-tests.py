@@ -16,6 +16,14 @@ class RummyTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         super().tearDown()
 
+    def test_runs_from_indexes(self):
+        self.model.restart()
+        solver = RummySolver(self.model)
+
+        a = [0,9,3,4]
+        runs = solver.getRunsFromIndexes(a)
+        print(runs)
+
     def test_scores(self):
         self.model.restart()
         self.model.addGroup([(1, 5), (2, 5), (3, 5)])
