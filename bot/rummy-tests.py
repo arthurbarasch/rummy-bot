@@ -4,6 +4,8 @@ from builtins import int
 import json
 import numpy as np
 
+from view import *
+
 from bot import RummyModel, RummySolver, RummyController, runRummyGame, k, K, m, n, N, NUM_PLAYERS, NUM_STARTING_TILES
 
 
@@ -15,6 +17,14 @@ class RummyTestCase(unittest.TestCase):
 
     def tearDown(self) -> None:
         super().tearDown()
+
+    def test_graphs(self):
+        self.model.restart()
+        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 3)])
+        solver = RummySolver(self.model)
+        solver.maxScore()
+        solution, ordered_runs = solver.traceSolution()
+        plot_runs_graph(ordered_runs)
 
     # Model Tests
     def test_copy_models(self):

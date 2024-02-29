@@ -29,6 +29,7 @@ class RummySolver:
         for i, c in enumerate(self.counter):
             print(str(i+1) + '. ' + '*' * c)
 
+
     def exportGraphTree(self):
         print('Exporting graph ')
 
@@ -58,6 +59,7 @@ class RummySolver:
                 arr.append([(i+1,value-1),(i+1,value)])
                 n-=1
 
+
         # Change formatting to HTML for .dot
         if len(arr) == 0:
             return '"[]"'
@@ -85,7 +87,13 @@ class RummySolver:
         return dotStr
     def addToGraphTree(self, value, oldRuns, newRuns, solution:RummyModel):
         newHash = self.getRunHash(newRuns)
-        self.graph += '{0}.{1} -> {2}.{3}\n{2}.{3} [label={4}]\n'.format(value,oldRuns,value+1,newHash, self.getIntermediateSolution(solution,newHash,value))
+
+
+        # if newHash in self.score[value-1] and self.score[value-1][newHash]:
+        solution_node = self.getIntermediateSolution(solution,newHash,value)
+
+
+        self.graph += '{0}.{1} -> {2}.{3}\n{2}.{3} [label={4}]\n'.format(value,oldRuns,value+1,newHash, solution_node)
 
     def maxScore(self, quarantine=False):
         if len(self.model.getTotalTilePool()) < 3:
@@ -95,7 +103,7 @@ class RummySolver:
         hand = self.model.getTotalTilePool() if not quarantine else self.model.getCurrentPlayer().getTilePool()
         print('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
 
-        score, solution = self._maxScore(quarantine=quarantine)
+        score, solution,_ = self._maxScore(quarantine=quarantine)
         self.solution = RummyModel(self.model)
         self.solution.copySolution(solution)
         self.displayCounter()
@@ -103,11 +111,11 @@ class RummySolver:
         return score
 
     def _maxScore(self, value=1, runs=np.zeros(shape=(k, m)), solution=RummyModel(), quarantine=False):
+        runHash = self.getRunHash(runs)
+
         # Base case
         if value > n:
-            return 0, solution
-
-        runHash = self.getRunHash(runs)
+            return 0, solution, runHash
 
         # Base case: memoization stored in 'score' array
         if runHash in self.score[value - 1] and self.score[value - 1][runHash][0] > -math.inf:
@@ -132,27 +140,24 @@ class RummySolver:
 
         if len(new_runs) == 0:
             if runHash not in self.score[value-1]:
-                self.score[value - 1][runHash] = (-math.inf, solution)
-            return -math.inf, solution
+                self.score[value - 1][runHash] = (-math.inf, solution, None)
+            return self.score[value - 1][runHash]
 
 
         for i in range(len(new_runs)):
             debugStr = '({})\tnew_hands:{}\trun_score[i]:{}'.format(value, new_hands[i], run_scores[i])
 
-            groupScores, new_solution = self.totalGroupSize(new_hands[i], solutions[i])
+            groupScores, old_solution = self.totalGroupSize(new_hands[i], solutions[i])
 
             groupScores = groupScores * value
             logging.debug(
                 '~~~~~~~~~~~~~* DEBUG STRING *~~~~~~~~~~~\n' + debugStr + ' \tgroupscores:{}\tsolution:\n{}\n'.format(
-                    groupScores, new_solution))
-
-            if self.CONFIG['output_graph']:
-                self.addToGraphTree(value,runHash, new_runs[i], new_solution)
+                    groupScores, old_solution))
 
             # Check the table constraint with the previous model
-            if new_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
+            if old_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
 
-                score, new_solution = self._maxScore(value + 1, new_runs[i], new_solution)
+                score, new_solution, old_runs_hash = self._maxScore(value + 1, new_runs[i], old_solution)
 
                 result = groupScores + run_scores[i] + score
 
@@ -160,12 +165,15 @@ class RummySolver:
                     self.otherSolutions.append((result, new_solution.getBoardAsArray()))
 
                 # If new-found result is bigger than the one being stored in the score array, save it
-                if runHash not in self.score[value - 1] or result >= self.score[value - 1][runHash][0]:
-                    self.score[value - 1][runHash] = (result, new_solution)
+                if runHash not in self.score[value - 1] or result > self.score[value - 1][runHash][0]:
+                    self.score[value - 1][runHash] = (result, new_solution,self.getRunHash(new_runs[i]))
+                    if self.CONFIG['output_graph']:
+                        self.addToGraphTree(value, runHash, new_runs[i], old_solution)
+
             else:
                 result = "-inf (doesn't satisfy table constraint) "
                 if runHash not in self.score[value - 1]:
-                    self.score[value - 1][runHash] = (-math.inf, new_solution)
+                    self.score[value - 1][runHash] = (-math.inf, solution, None)
 
 
             assert groupScores >= 0
@@ -280,7 +288,7 @@ class RummySolver:
             return (value - 2) + (value - 1) + value
         elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
 
-            isLongest = runs[suit - 1, M] > runs[suit-1, (M+1) % 2]
+            isLongest = runs[suit - 1, M] > runs[suit-1, (M+1) % m]
             assert solution.addToRun(tile, not isLongest)
             return value
 
@@ -323,6 +331,7 @@ class RummySolver:
     @staticmethod
     def getRunHash(run):
         h = ''
+        # RUN_CONFIGS = [{0, 0}, {0, 1}, {0, 2}, {0, 3}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {2, 3}, {3, 3}]
 
         for i in range(k):
             multiset = {0: 0, 1: 0, 2: 0, 3: 0}
@@ -333,12 +342,12 @@ class RummySolver:
                 h += str(multiset[sVal])
         return h
 
-    def getMultisetFromHash(self, hash):
+    def getMultisetFromHash(self, run_hash):
         multisets = []
         for i in range(k):
             multiset = {0: 0, 1: 0, 2: 0, 3: 0}
             for j in range(s+1):
-                multiset[j] = int(hash[(i*k)+j])
+                multiset[j] = int(run_hash[(i*k)+j])
 
             multisets.append(multiset)
         return multisets
@@ -358,17 +367,19 @@ class RummySolver:
     def traceSolution(self):
         solution = RummyModel()
         lastRun = np.zeros(shape=(k, m))
+
+        orderedRuns = []
         for val in range(n):
             maxScore = -math.inf
             maxRun = None
             for key in self.score[val].keys():
                 if self.score[val][key][0] > maxScore:
-                    maxRun = key
-                    maxScore = self.score[val][key]
+                    maxScore = self.score[val][key][0]
+                    maxRun = (key, self.score[val][key][2])  # Max Run = The (old one, and new one)
+
+            orderedRuns.append(maxRun[1])
+            # self.unpackRunHashOnModel(maxRun[0],lastRun,solution,val)
 
 
-            self.unpackRunHashOnModel(maxRun,lastRun,solution,val)
-
-
-        return solution
+        return solution, orderedRuns
 
