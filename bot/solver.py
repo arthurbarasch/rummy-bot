@@ -121,12 +121,22 @@ class RummySolver:
 
         # Base case: memoization stored in 'score' array
         if runHash in self.score[value-1] and self.score[value-1][runHash][0] != -math.inf:
+            mem_score = self.score[value-1][runHash][0]
+
+            if value == 6 and str(solution) == '[[(1, 1), (1, 2), (1, 3)], [(1, 3), (1, 4), (1, 5)]]':
+                print('AAAAAAAAAAAAAABABABABBA')
+                print(self.score[value-1][runHash][0])
+                print(self.score[value-1][runHash][1])
+                print(self.score[value-1][runHash][2])
+
             # logging.warning('\n({}) return memoized val:{}\tsolution:{}'.format(value, self.score[value-1][runHash][0], list(
             #     map(lambda x: str(x[1]), self.score[value-1][runHash] ))))
             # if self.score[value-1][runHash][0] == 5:
             # print('\n({})!!! Score {} run hash-> {}\nSOLUTION:\n{}\n'.format(value, self.score[value-1][runHash][0],runHash,str(self.score[value-1][runHash][1])))
-
-            return self.score[value-1][runHash]
+            if mem_score>solution.getBoardScore():
+                return self.score[value-1][runHash]
+            else:
+                return (0,solution,runHash)
 
         # Recursion counter
         if value < len(self.counter):
@@ -169,6 +179,9 @@ class RummySolver:
                     print('FOUND SOLOLOLUTION')
                     print(score)
                     print(new_solution)
+                    print(new_runs[i])
+                    print('\n({})!!! Score {} run hash-> {}\nSOLUTION:\n{}\n'.format(value,self.score[value - 1][runHash][0],runHash, str(self.score[value - 1][runHash][1])))
+
 
                 result = groupScores + run_scores[i] + score
 
@@ -206,6 +219,12 @@ class RummySolver:
 
         # For each suit, create or extend runs with available tiles
         self.makeNewRun(hand, np.array(runs), (1, value), RummyModel(solution), ret)
+
+        if value == 5:
+            print(f'VALUE {value} SOLUTIONS')
+            for i,s in enumerate(ret['solutions']):
+                print(ret['run_scores'][i])
+                print(s)
 
         # Assertions about the length of the arrays returned
         assert sum(

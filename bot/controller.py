@@ -62,8 +62,8 @@ class RummyController:
 def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     model = RummyModel()
     controller = RummyController(model, game_mode=game_mode)
-    # controller.model.start()
-    controller.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 3), (1, 4), (1,5)])
+    controller.model.start()
+    # controller.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 3), (1, 4), (1,5)])
 
     if solve:
         # Insert example game states here
