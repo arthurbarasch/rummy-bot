@@ -15,6 +15,7 @@ j = 0  # Number of jokers
 n = 13  # Number of different numbered values of tiles
 k = 4  # Number of different suits
 s = 3  # Minimal set size
+COLORS = ['black','blue', 'yellow', 'red']
 
 # Sets
 K = list(range(1, k+1))  # Set of suits
@@ -33,6 +34,14 @@ class RummyModel:
         else:
             self.drawPile = model.drawPile[:]
             self.copyPlayers(model.players)
+
+    @staticmethod
+    def get_score_from_board_array(array):
+        score = 0
+        for set in array:
+            for tile in set:
+                score += tile[1]
+        return score
 
     @staticmethod
     def getBoardCopy(board):
@@ -271,7 +280,7 @@ class RummyModel:
     # Adds the input tile to an available run available
     # If two available runs for such tile, use the input value 'isLongest' to establish which run
     # to add the tile to (the longest or shortest run)
-    def addToRun(self, tile, isLongest):
+    def addToRun(self, tile, isLongest=True):
         run1 = None
         run2 = None
 

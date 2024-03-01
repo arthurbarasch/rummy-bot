@@ -18,20 +18,27 @@ class RummyTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         super().tearDown()
 
-    def test_graphs(self):
-        self.model.restart()
-        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 3)])
-        solver = RummySolver(self.model)
-        solver.maxScore()
-        solution, ordered_runs = solver.traceSolution()
-        plot_runs_graph(ordered_runs)
+    def test_run_hash(self):
+        runs = np.zeros((k,m))
+        runs[0] = [1,1]
+        runs[1] = [3,1]
+        runs[2] = [2,3]
+        run_hash = RummySolver.getRunHash(runs)
+        self.assertEqual(run_hash, '4680')
+
 
     # Model Tests
     def test_copy_models(self):
         self.model.restart()
         self.model.addGroup([(1, 5), (2, 5), (3, 5)])
+        self.model.addRun([(1, 1), (1, 2), (1, 3)])
+
         copy = RummyModel(self.model)
         self.assertEqual(copy.board['groups'][0], [(1, 5), (2, 5), (3, 5)])
+
+        copy.addToRun((1,4))
+        self.assertNotIn((1,4), self.model.board['runs'][0])
+        self.assertIn((1,4), copy.board['runs'][0])
 
         copy.getCurrentPlayer().append((1, 1))
         self.assertIn((1, 1), copy.getCurrentPlayer())
@@ -289,6 +296,17 @@ class RummyTestCase(unittest.TestCase):
         self.model.initNewRun((1, 13))
         solver = RummySolver(self.model)
         self.assertLessEqual(solver.maxScore(), 0)
+
+    def test_graphs(self):
+        self.model.restart()
+        # self.model.getCurrentPlayer().extend([(1, 9), (1, 10), (1, 11), (1, 11), (1, 12), (1, 13)])
+
+        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 3)])
+        solver = RummySolver(self.model)
+        solver.maxScore()
+        solution, ordered_runs = solver.traceSolution()
+        print(solution)
+        plot_runs_graph(ordered_runs)
 
     # def test_make_runs_all_tiles(self):
     #     self.model.restart()
