@@ -33,12 +33,13 @@ class RummySolver:
     def setModel(self, model: RummyModel):
         self.__init__(model)
 
-    def displayRunsArray(self):
+    def displayScoreArray(self):
         print('Runs array')
-        print(f'Value\tScore\tRuns\tSolution')
+        print(f'Value\tScore\tRuns\tNext runs\tSolution')
         for i in range(n):
             for key in self.score[i].keys():
-                print(f'{i+1}\t\t{self.score[i][key][0]}\t\t{key}\t\t{self.score[i][key][1]}')
+                score, solution, next_runs = self.score[i][key]
+                print(f'{i+1}\t\t{score}\t\t{key}\t\t{next_runs}\t\t{solution}')
     def displayOtherSolutions(self):
         p = '#'*40
         print(p+'ALL SOLUTIONS'+p)
@@ -91,7 +92,8 @@ class RummySolver:
         node = view.getDotNode(arr)
 
         self.graph += '{0}.{1} -> {2}.{3}\n{2}.{3} [label={4}]\n'.format(value,oldRuns,value+1,newHash, node)
-        return score
+
+
 
     def maxScore(self, quarantine=False):
         if len(self.model.getTotalTilePool()) < 3:
@@ -102,12 +104,13 @@ class RummySolver:
         print('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
 
         score, solution,_ = self._maxScore(quarantine=quarantine)
+
         self.solution = RummyModel(self.model)
         self.solution.copySolution(solution)
         self.displayCounter()
         self.exportGraphTree()
-        self.displayOtherSolutions()
-        self.displayRunsArray()
+        # self.displayOtherSolutions()
+        self.displayScoreArray()
         return score
 
 
@@ -123,20 +126,21 @@ class RummySolver:
         if runHash in self.score[value-1] and self.score[value-1][runHash][0] != -math.inf:
             mem_score = self.score[value-1][runHash][0]
 
-            if value == 6 and str(solution) == '[[(1, 1), (1, 2), (1, 3)], [(1, 3), (1, 4), (1, 5)]]':
-                print('AAAAAAAAAAAAAABABABABBA')
-                print(self.score[value-1][runHash][0])
-                print(self.score[value-1][runHash][1])
-                print(self.score[value-1][runHash][2])
-
             # logging.warning('\n({}) return memoized val:{}\tsolution:{}'.format(value, self.score[value-1][runHash][0], list(
             #     map(lambda x: str(x[1]), self.score[value-1][runHash] ))))
             # if self.score[value-1][runHash][0] == 5:
             # print('\n({})!!! Score {} run hash-> {}\nSOLUTION:\n{}\n'.format(value, self.score[value-1][runHash][0],runHash,str(self.score[value-1][runHash][1])))
-            if mem_score>solution.getBoardScore():
+            if mem_score>=solution.getBoardScore():
+                if str(solution) == '[[(1, 1), (1, 2), (1, 3)], [(1, 3), (1, 4), (1, 5)]]':
+                    print('a. FOUND SOLOLUTION')
                 return self.score[value-1][runHash]
             else:
+                if str(solution) == '[[(1, 1), (1, 2), (1, 3)], [(1, 3), (1, 4), (1, 5)]]':
+                    print('b. FOUND SOLOLUTION')
+                # self.score[value - 1][runHash] = (0,solution,runHash)
                 return (0,solution,runHash)
+
+
 
         # Recursion counter
         if value < len(self.counter):
@@ -169,36 +173,20 @@ class RummySolver:
 
             # Check the table constraint with the previous model
             if old_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
-
                 score, new_solution, old_runs_hash = self._maxScore(value + 1, new_runs[i], RummyModel(old_solution))
-
-                if score is None:
-                    continue
-
-                if str(old_solution) == '[[(1, 1), (1, 2), (1, 3)], [(1, 3), (1, 4), (1, 5)]]':
-                    print('FOUND SOLOLOLUTION')
-                    print(score)
-                    print(new_solution)
-                    print(new_runs[i])
-                    print('\n({})!!! Score {} run hash-> {}\nSOLUTION:\n{}\n'.format(value,self.score[value - 1][runHash][0],runHash, str(self.score[value - 1][runHash][1])))
-
 
                 result = groupScores + run_scores[i] + score
 
                 if value == n:
                     self.otherSolutions.append((result, new_solution.getBoardAsArray()))
 
-                if self.CONFIG['output_graph']:
-                    self.addToGraphTree(value, runHash, new_runs[i], old_solution)
 
                 # If new-found result is bigger than the one being stored in the score array, save it
                 if runHash not in self.score[value-1] or result > self.score[value-1][runHash][0]:
+                    if self.CONFIG['output_graph'] and new_solution.getBoardScore()>=solution.getBoardScore():
+                        self.addToGraphTree(value, runHash, new_runs[i], old_solution)
                     # print(f'\nAt value {value} ----> {result} > {self.score[value-1][runHash][0]}\n')
                     self.score[value-1][runHash] = (result, new_solution, self.getRunHash(new_runs[i]))
-
-                    if result == 18:
-                        print('\n({})!!! Score {} run hash-> {}\nSOLUTION:\n{}\n'.format(value, self.score[value-1][runHash][0],runHash,str(self.score[value-1][runHash][1])))
-                        # print(f'\n\nOLD VALUE -> {self.score[value-1][runHash][0]}\nNEW VALUE -> {result} \n')
 
 
             else:
@@ -211,6 +199,8 @@ class RummySolver:
             # Log the recursion
             debugStr += '\tgroupScores:{}\tresult: {}'.format(groupScores, result)
 
+        # if self.score[value-1][runHash][1].getBoardScore()<solution.getBoardScore():
+        #     return (0,solution,runHash)
 
         return self.score[value-1][runHash]
 
@@ -219,12 +209,6 @@ class RummySolver:
 
         # For each suit, create or extend runs with available tiles
         self.makeNewRun(hand, np.array(runs), (1, value), RummyModel(solution), ret)
-
-        if value == 5:
-            print(f'VALUE {value} SOLUTIONS')
-            for i,s in enumerate(ret['solutions']):
-                print(ret['run_scores'][i])
-                print(s)
 
         # Assertions about the length of the arrays returned
         assert sum(
@@ -237,9 +221,9 @@ class RummySolver:
     def makeNewRun(self, hand, runs, searchTile, solution, ret, run_scores=0):
         suit, value = searchTile
         if suit > k:
-            if str(runs) in [str(r) for r in ret['new_runs']]:
-                print('Found duplicate run')
-                print(str(ret['new_runs'])+'\n')
+            # if str(runs) in [str(r) for r in ret['new_runs']]:
+            #     print('Found duplicate run')
+            #     print(str(ret['new_runs'])+'\n')
 
             ret['new_runs'].append(np.array(runs))
             ret['new_hands'].append(hand[:])
@@ -322,12 +306,8 @@ class RummySolver:
         elif runVal == 2:  # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
             runs[suit - 1, M] += 1
 
-
             r = [(suit, value-2), (suit, value-1), tile]
             assert solution.addRun(r)
-
-            if value == 5:
-                print('AT VALUE 5 UPDATE RUNS'+str(solution))
 
             return (value - 2) + (value - 1) + value
         elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
@@ -391,7 +371,6 @@ class RummySolver:
     @staticmethod
     def getMultisetFromHash(run_hash):
         assert len(run_hash) == k
-        print(run_hash)
 
         multisets = []
         for i in range(k):

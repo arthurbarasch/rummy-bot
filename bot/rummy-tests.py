@@ -244,6 +244,13 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(18, solver.maxScore())
         self.assertEqual(len(solver.solution.board["runs"]), 2)
 
+
+        self.model.getCurrentPlayer().append((1,6))
+        solver = RummySolver(self.model)
+        self.assertEqual(24, solver.maxScore())
+        self.assertEqual(len(solver.solution.board["runs"]), 2)
+
+
     def test_make_groups(self):
         self.model.restart()
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
@@ -268,10 +275,10 @@ class RummyTestCase(unittest.TestCase):
 
         self.model.restart()
         self.model.getCurrentPlayer().extend([(1, 10), (3, 10), (4, 10),
-                                              (1, 2), (1, 3), (1, 4)])
+                                              (1, 8), (1, 9), (1, 10)])
         solver = RummySolver(self.model)
-        self.assertEqual(39, solver.maxScore())
-        self.assertEqual(solver.solution.board["runs"][0], [(1, 2), (1, 3), (1, 4)])
+        self.assertEqual(57, solver.maxScore())
+        self.assertEqual(solver.solution.board["runs"][0], [(1, 8), (1, 9), (1, 10)])
         self.assertEqual(set(solver.solution.board["groups"][0]), {(1, 10), (3, 10), (4, 10)})
 
     def test_solve_random_hand(self):
