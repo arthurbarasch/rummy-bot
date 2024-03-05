@@ -180,14 +180,10 @@ class RummySolver:
         # Make runs
         new_runs, new_hands, run_scores = self.makeRuns(hand, runs, value)
 
-        if value == 8:
-            print('Value is 8')
-            print(self.model.getTotalTilePool(filter_value=value))
-            print(new_hands)
 
         if len(new_runs) == 0:
-            # if runHash not in self.solutions[value - 1]:
-            #     self.solutions[value - 1][runHash] = runHash
+            if runHash not in self.solutions[value - 1]:
+                self.solutions[value - 1][runHash] = '0'*k
             return 0
             # self.setScoreFromRuns(0,value,runs)
             # runsHash = self.getRunHash(runs)
@@ -198,9 +194,7 @@ class RummySolver:
 
         for i in range(len(new_runs)):
             groupScores = self.totalGroupSize(new_hands[i]) * value
-            if groupScores>0:
-                print('YEASS')
-                print(self.score[value-1])
+
             # Check the table constraint with the previous model
             # if new_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
 
@@ -230,9 +224,8 @@ class RummySolver:
 
         for next_runs in possible_runs:
             if len(next_runs) != k:
-                print('WHAAAT')
-                print(next_runs)
-                return [], [], []
+                continue
+                # return [],[],[]
 
             run_score = 0
             new_hand = hand[:]
@@ -270,9 +263,12 @@ class RummySolver:
 
         if len(children) == 0:
             final = []
+            if len(possible_runs) == 0:
+                return []
+
             for run in possible_runs:
                 d = collections.deque(run[:])
-                d.appendleft(MS([0,0]))
+                # d.appendleft(MS([0,0]))
                 final.append(list(d))
             return final
 
@@ -333,7 +329,6 @@ class RummySolver:
 
     # Return the total group size that can be formed from the given 'hand'
     def totalGroupSize(self, hand):
-        print(hand)
         if len(hand) < 3:
             return 0
 
@@ -357,9 +352,6 @@ class RummySolver:
         score = l1 if l1 >= 3 else 0
         score += l2 if l2 >= 3 else 0
 
-        if score>0:
-            print('Group size '+str(score))
-            print(hand)
         return score
 
     def setScoreFromRun(self,score,value,suit,run):
@@ -421,12 +413,13 @@ class RummySolver:
         for tile in g1:
             g2.remove(tile)
 
-        if len(g1) > 3:
+        if len(g1) >= 3:
             solution.addGroup(g1)
-        if len(g2) > 3:
+        if len(g2) >= 3:
             solution.addGroup(g2)
 
         return solution
+
 
     def traceSolution(self):
         solution = RummyModel()
@@ -434,13 +427,20 @@ class RummySolver:
 
         for i in range(n):
             value = i+1
+
             hand = self.model.getTotalTilePool(filter_value=value)
 
-            if len(self.solutions[i]) == 0:
+            prevHash = self.getRunHash(prevRuns)
+            if prevHash not in self.solutions[i]:
+                logging.warning('Could not find the solution')
+                continue
+
+            if len(self.solutions[i]) == 0 or prevHash not in self.solutions[i]:
                 self.addGroupsToSolution(hand, solution)
                 continue
 
-            nextHash = self.solutions[i][self.getRunHash(prevRuns)]
+
+            nextHash = self.solutions[i][prevHash]
 
             nextRuns = self.getRunsFromIndexes(nextHash)
 
@@ -470,63 +470,6 @@ class RummySolver:
         final = RummyModel(self.model)
         final.copySolution(solution)
         return final
-    #
-    # def traceSolution(self):
-    #     solution = RummyModel()
-    #     prevRuns = np.zeros(shape=(k,m))
-    #
-    #     tilePool = self.model.getTotalTilePool()
-    #
-    #     # Loop through n
-    #     for N in range(n):
-    #         maxScore = 0
-    #         indexes = np.zeros(k)
-    #
-    #         # Loop through k
-    #         for K in range(k):
-    #             print('SCORE ->\n'+str(self.score[N][K]))
-    #             i = np.argmax(self.score[N][K])
-    #             val = self.score[N][K][i]
-    #             if maxScore == val or K == 0:
-    #                 maxScore = val
-    #                 indexes[K] = i
-    #
-    #         # print('IND->\n'+str(indexes))
-    #         runs = self.getRunsFromIndexes(indexes)
-    #         # print('RUNS->\n'+str(runs))
-    #         for K in range(k):
-    #             for M in range(m):
-    #                 if runs[K][M] > 0:
-    #                     print((K+1, N+1))
-    #                     tilePool.remove((K+1, N+1))
-    #
-    #                 # print('#### ({}) k - {} \t m - {} ####'.format(runs[K][M],K,M))
-    #
-    #                 # if K == 0:
-    #                 #     print(f'{N+1}{runs[K][M]}')
-    #                 if runs[K][M] >= 2:
-    #                     print('%% IN TRACE SOLUTION %%\nPREV RUN\n'+str(prevRuns[K][M])+'\nRUN'+str(runs[K][M])+'\n\n')
-    #                 if prevRuns[K][M] == 2 and runs[K][M] == 3:
-    #                     solution.addRun([(K+1, N-1), (K+1, N), (K+1, N+1)])  # Add the new run
-    #
-    #                 if prevRuns[K][M] == 3 and runs[K][M] == 3:
-    #                     solution.addToRun((K+1, N+1))
-    #
-    #         groupTiles = list(filter(lambda x: x[1] == N+1 , tilePool))
-    #         g1 = list(set(groupTiles))
-    #         g2 = groupTiles[:]
-    #         for tile in g1:
-    #             g2.remove(tile)
-    #
-    #         solution.addGroup(g1)
-    #         solution.addGroup(g2)
-    #
-    #         prevRuns = runs[:]
-    #
-    #     print("***TRACE SOLUTION***")
-    #     print(self.score[3])
-    #     print(solution)
-    #     return solution
 
 
 
