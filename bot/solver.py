@@ -83,17 +83,17 @@ class RummySolver:
             print(self.graph , file=f)
 
     def getIntermediateSolution(self,runsHash,value):
-        multisets = self.getMultisetFromHash(runsHash)
+        multisets = self.getRunsFromIndexes(runsHash)
         arr = []
 
         # Add tiles in unfinished runs
         for i in range(k):
-            n = multisets[i][1]
+            n = multisets[i].get(1,0)
             while n>0:
                 arr.append([(i+1,value)])
                 n-=1
 
-            n = multisets[i][2]
+            n = multisets[i].get(2,0)
             while n>0:
                 arr.append([(i+1,value-1),(i+1,value)])
                 n-=1
@@ -141,6 +141,9 @@ class RummySolver:
         print('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
 
         score = self._maxScore(quarantine=quarantine)
+        print('Max Score found: '+str(score))
+        print(self.solutions)
+
         self.solution = self.traceSolution()
         self.displayCounter()
 
@@ -148,7 +151,6 @@ class RummySolver:
             # self.exportScoreHeatmap()
             self.exportGraphTree()
 
-        print('Max Score found: '+str(score))
         return score
 
     def _maxScore(self, value=1, runs=[MS([0,0])]*k, quarantine=False):
@@ -180,26 +182,30 @@ class RummySolver:
         if len(new_runs) == 0:
             return self.getScoreFromRuns(value, runs)
 
+        if value == 7:
+            print('Value is 7')
+            print(new_hands)
+
         for i in range(len(new_runs)):
             groupScores = self.totalGroupSize(new_hands[i]) * value
 
             # Check the table constraint with the previous model
             # if new_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
-            if True:
-                if self.CONFIG['output_graph']:
-                    dotNode = self.getDOTNode(value, runs, new_runs[i])
-                    self.addToGraphTree(dotNode)
 
-                score = self._maxScore(value + 1, new_runs[i])
+            # if self.CONFIG['output_graph']:
+            #     dotNode = self.getDOTNode(value, runs, new_runs[i])
+            #     self.addToGraphTree(dotNode)
 
-                result = groupScores + run_scores[i] + score
+            score = self._maxScore(value + 1, new_runs[i])
 
-                mem_score = self.getScoreFromRuns(value, runs)
-                # If new-found result is bigger than the one being stored in the score array, save it
-                if result > mem_score:
-                    self.setScoreFromRuns(result, value, runs)
-                    self.solutions[value-1][self.getRunHash(runs)] = self.getRunHash(new_runs[i])
-                    # self.solutions[value - 1][str(hash(str(runs)))] = self.getIndexFromRuns(new_runs[i])
+            result = groupScores + run_scores[i] + score
+
+            mem_score = self.getScoreFromRuns(value, runs)
+            # If new-found result is bigger than the one being stored in the score array, save it
+            if result > mem_score:
+                self.setScoreFromRuns(result, value, runs)
+                self.solutions[value-1][self.getRunHash(runs)] = self.getRunHash(new_runs[i])
+                # self.solutions[value - 1][str(hash(str(runs)))] = self.getIndexFromRuns(new_runs[i])
 
             assert groupScores >= 0
 
@@ -210,8 +216,6 @@ class RummySolver:
 
         ret = {'new_runs':[],'new_hands':[],'run_scores':[]}
 
-
-
         for next_runs in possible_runs:
             if len(next_runs) != k:
                 return [], [], []
@@ -221,20 +225,26 @@ class RummySolver:
             for i in range(k):
                 suit = i + 1
                 tilesUsed = int(max(sum(list(next_runs[i])) - sum(list(runs[i])), 0))
+                #
+                # if next_runs[i].get(3,0)>0 and runs[i].get(3,0) > 0:
+                #     tilesUsed +=
 
-                p2 = list(runs[i]).count(2)
-                n2 = list(next_runs[i]).count(2)
-                p3 = list(runs[i]).count(3)
-                n3 = list(next_runs[i]).count(3)
-                n0 = list(next_runs[i]).count(0)
+                # p2 = list(runs[i]).count(2)
+                # n2 = list(next_runs[i]).count(2)
+                # p3 = list(runs[i]).count(3)
+                # n3 = list(next_runs[i]).count(3)
+                # n0 = list(next_runs[i]).count(0)
+                #
+                # num_new_runs = max(0,min(p2,1) * (n3-p3))
+                # num_only_tiles = p3 if 0 < p3 <= n3 else 0
 
-                num_new_runs = max(0,min(p2,1) * (n3-p3))
-                num_only_tiles = p3 if 0 < p3 <= n3 else 0
+                num_new_runs, num_only_tiles = self.getNumNewRunsAndTiles(runs[i],next_runs[i])
 
                 run_score += ((value - 2) + (value - 1) + value)*num_new_runs
                 run_score += value*num_only_tiles
 
                 for j in range(tilesUsed):
+                    print('Removing '+str((suit,value)))
                     new_hand.remove((suit,value))
 
             ret['new_runs'].append(next_runs)
@@ -274,32 +284,41 @@ class RummySolver:
 
 
 
+    def getNumNewRunsAndTiles(self,prevRun, nextRun):
+        p2 = list(prevRun).count(2)
+        n2 = list(nextRun).count(2)
+        p3 = list(prevRun).count(3)
+        n3 = list(nextRun).count(3)
+        n0 = list(nextRun).count(0)
 
+        num_new_runs = max(0, min(p2, 1) * (n3 - p3))
+        num_only_tiles = p3 if 0 < p3 <= n3 else 0
+        return num_new_runs, num_only_tiles
 
-
-    # (Destructive method) Updates the runs array given input tile and value of m, and returns the score added
-    # Also, keeps track of tiles used in the solution
-    def updateRun(self, runs, tile, M):
-        suit, value = tile
-        runVal = runs[suit - 1, M]
-
-        if runVal == 0:
-            if value + 2 > n:
-                # No need to start a new run if we know we can't finish it
-                return 0
-            runs[suit - 1, M] += 1
-            return 0
-        elif runVal == 1:  # If current length of run 0 or 1, increase length by one
-            runs[suit - 1, M] += 1
-            return 0
-        elif runVal == 2:  # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
-            runs[suit - 1, M] += 1
-            return (value - 2) + (value - 1) + value
-        elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
-            return value
+    # # (Destructive method) Updates the runs array given input tile and value of m, and returns the score added
+    # # Also, keeps track of tiles used in the solution
+    # def updateRun(self, runs, tile, M):
+    #     suit, value = tile
+    #     runVal = runs[suit - 1, M]
+    #
+    #     if runVal == 0:
+    #         if value + 2 > n:
+    #             # No need to start a new run if we know we can't finish it
+    #             return 0
+    #         runs[suit - 1, M] += 1
+    #         return 0
+    #     elif runVal == 1:  # If current length of run 0 or 1, increase length by one
+    #         runs[suit - 1, M] += 1
+    #         return 0
+    #     elif runVal == 2:  # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
+    #         runs[suit - 1, M] += 1
+    #         return (value - 2) + (value - 1) + value
+    #     elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
+    #         return value
 
     # Return the total group size that can be formed from the given 'hand'
     def totalGroupSize(self, hand):
+        print(hand)
         if len(hand) < 3:
             return 0
 
@@ -322,7 +341,17 @@ class RummySolver:
 
         score = l1 if l1 >= 3 else 0
         score += l2 if l2 >= 3 else 0
+
+        if score>0:
+            print('Group size '+str(score))
+            print(hand)
         return score
+
+    def setScoreFromRun(self,score,value,suit,run):
+        for j in range(f_of_m):
+            if run == RUN_CONFIGS[j]:
+                self.score[value-1][suit-1][j] = int(score)
+                break
 
     def setScoreFromRuns(self, score, value, runs):
         for i in range(k):
@@ -330,7 +359,8 @@ class RummySolver:
 
             for j in range(f_of_m):
                 if run == RUN_CONFIGS[j]:
-                    self.score[value-1][i][j] = int(score)
+                    prevScore = self.score[value-1][i][j]
+                    self.score[value-1][i][j] = max(prevScore, int(score))
                     break
 
     def getScoreFromRuns(self, value, runs):
@@ -345,6 +375,7 @@ class RummySolver:
         temp = scores[0]
         for s in scores:
             if s != temp:
+                # assert False
                 return -math.inf
 
         return temp
@@ -369,63 +400,98 @@ class RummySolver:
         assert len(h) == k
         return h
 
-
     def traceSolution(self):
         solution = RummyModel()
-        prevRuns = np.zeros(shape=(k,m))
-
+        prevRuns = [MS([0,0]),MS([0,0]),MS([0,0]),MS([0,0])]
         tilePool = self.model.getTotalTilePool()
 
-        # Loop through n
-        for N in range(n):
-            maxScore = 0
-            indexes = np.zeros(k)
+        for i in range(n):
+            print(self.solutions[i])
+            key = max(self.solutions[i], key=self.solutions[i].get)
 
-            # Loop through k
-            for K in range(k):
-                print('SCORE ->\n'+str(self.score[N][K]))
-                i = np.argmax(self.score[N][K])
-                val = self.score[N][K][i]
-                if maxScore == val or K == 0:
-                    maxScore = val
-                    indexes[K] = i
+            value = i
+            nextRuns = self.getRunsFromIndexes(key)
 
-            # print('IND->\n'+str(indexes))
-            runs = self.getRunsFromIndexes(indexes)
-            # print('RUNS->\n'+str(runs))
-            for K in range(k):
-                for M in range(m):
-                    if runs[K][M] > 0:
-                        print((K+1, N+1))
-                        tilePool.remove((K+1, N+1))
+            for j in range(k):
+                num_new_runs, num_new_tiles = self.getNumNewRunsAndTiles(prevRuns[j],nextRuns[j])
 
-                    # print('#### ({}) k - {} \t m - {} ####'.format(runs[K][M],K,M))
+                while num_new_runs>0:
+                    suit = j+1
+                    solution.addRun([(suit,value-2),(suit,value-1),(suit,value)])
+                    num_new_runs -= 1
 
-                    # if K == 0:
-                    #     print(f'{N+1}{runs[K][M]}')
-                    if runs[K][M] >= 2:
-                        print('%% IN TRACE SOLUTION %%\nPREV RUN\n'+str(prevRuns[K][M])+'\nRUN'+str(runs[K][M])+'\n\n')
-                    if prevRuns[K][M] == 2 and runs[K][M] == 3:
-                        solution.addRun([(K+1, N-1), (K+1, N), (K+1, N+1)])  # Add the new run
+                while num_new_tiles>0:
+                    suit = j+1
+                    solution.addToRun((suit,value))
+                    num_new_tiles -= 1
 
-                    if prevRuns[K][M] == 3 and runs[K][M] == 3:
-                        solution.addToRun((K+1, N+1))
 
-            groupTiles = list(filter(lambda x: x[1] == N+1 , tilePool))
-            g1 = list(set(groupTiles))
-            g2 = groupTiles[:]
-            for tile in g1:
-                g2.remove(tile)
+            if self.CONFIG['output_graph']:
+                dotNode = self.getDOTNode(value, prevRuns, nextRuns)
+                self.addToGraphTree(dotNode)
 
-            solution.addGroup(g1)
-            solution.addGroup(g2)
+            prevRuns = nextRuns
 
-            prevRuns = runs[:]
-
-        print("***TRACE SOLUTION***")
-        print(self.score[3])
-        print(solution)
-        return solution
+        final = RummyModel(self.model)
+        final.copySolution(solution)
+        return final
+    #
+    # def traceSolution(self):
+    #     solution = RummyModel()
+    #     prevRuns = np.zeros(shape=(k,m))
+    #
+    #     tilePool = self.model.getTotalTilePool()
+    #
+    #     # Loop through n
+    #     for N in range(n):
+    #         maxScore = 0
+    #         indexes = np.zeros(k)
+    #
+    #         # Loop through k
+    #         for K in range(k):
+    #             print('SCORE ->\n'+str(self.score[N][K]))
+    #             i = np.argmax(self.score[N][K])
+    #             val = self.score[N][K][i]
+    #             if maxScore == val or K == 0:
+    #                 maxScore = val
+    #                 indexes[K] = i
+    #
+    #         # print('IND->\n'+str(indexes))
+    #         runs = self.getRunsFromIndexes(indexes)
+    #         # print('RUNS->\n'+str(runs))
+    #         for K in range(k):
+    #             for M in range(m):
+    #                 if runs[K][M] > 0:
+    #                     print((K+1, N+1))
+    #                     tilePool.remove((K+1, N+1))
+    #
+    #                 # print('#### ({}) k - {} \t m - {} ####'.format(runs[K][M],K,M))
+    #
+    #                 # if K == 0:
+    #                 #     print(f'{N+1}{runs[K][M]}')
+    #                 if runs[K][M] >= 2:
+    #                     print('%% IN TRACE SOLUTION %%\nPREV RUN\n'+str(prevRuns[K][M])+'\nRUN'+str(runs[K][M])+'\n\n')
+    #                 if prevRuns[K][M] == 2 and runs[K][M] == 3:
+    #                     solution.addRun([(K+1, N-1), (K+1, N), (K+1, N+1)])  # Add the new run
+    #
+    #                 if prevRuns[K][M] == 3 and runs[K][M] == 3:
+    #                     solution.addToRun((K+1, N+1))
+    #
+    #         groupTiles = list(filter(lambda x: x[1] == N+1 , tilePool))
+    #         g1 = list(set(groupTiles))
+    #         g2 = groupTiles[:]
+    #         for tile in g1:
+    #             g2.remove(tile)
+    #
+    #         solution.addGroup(g1)
+    #         solution.addGroup(g2)
+    #
+    #         prevRuns = runs[:]
+    #
+    #     print("***TRACE SOLUTION***")
+    #     print(self.score[3])
+    #     print(solution)
+    #     return solution
 
 
 
@@ -434,15 +500,3 @@ class RummySolver:
         for i in range(k):
             multisets.append(RUN_CONFIGS[int(hash[i])])
         return multisets
-
-    # # def unpackRunHashOnModel(self,run,lastRun, model,v):
-    # #     tiles = self.model.getTotalTilePool(filter_value=v)
-    # #
-    # #     m0 = self.getMultisetFromHash(lastRun)
-    # #     m1 = self.getMultisetFromHash(run)
-    # #
-    # #     for i in range(k):
-    # #         newRuns = m1[i][3] - m0[i][3]
-    # #         while newRuns > 0:
-    # #             model.addRun([(k,v-2),(k,v-1),(k,v)])
-    # #             newRuns -= 1

@@ -219,12 +219,15 @@ class RummyTestCase(unittest.TestCase):
         self.model.addRun([(2, 4), (2, 5), (2, 6)])
         self.model.getCurrentPlayer().extend([(3, 7)])
         solver = RummySolver(self.model)
-        runs = np.zeros(shape=(k, m))
+        runs = [MS([0,0]),MS([0,0]),MS([0,0]),MS([0,0])]
         solution = RummyModel()
-        new_runs, new_hands, run_scores = solver.makeRuns(self.model.getTotalTilePool(filter_value=4), runs, 4)
+
+        hand = self.model.getTotalTilePool(filter_value=4)
+        self.assertEqual(len(hand),1)
+        new_runs, new_hands, run_scores = solver.makeRuns(hand, runs, 4)
         self.assertEqual(len(new_runs), 2)
-        self.assertEqual(new_hands, [[], [(2, 4)]])
         self.assertEqual(run_scores, [0, 0])
+        self.assertEqual(new_hands, [[], [(2, 4)]])
 
     def test_make_runs_2(self):
         self.model.restart()
@@ -242,12 +245,18 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(len(solver.solution.board["runs"]), 2)
 
     def test_make_groups(self):
+
+        self.model.restart()
+        self.model.addGroup([(1, 8), (2, 8), (3, 8)])
+        self.model.getCurrentPlayer().extend([(4, 8)])
+        solver = RummySolver(self.model)
+        self.assertEqual(32, solver.maxScore())
+
         self.model.restart()
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
         self.model.getCurrentPlayer().extend([(3, 10)])
         solver = RummySolver(self.model)
         self.assertEqual(30, solver.maxScore())
-        logging.warning(solver.score[9])
 
         # logging.warning(solver.solution.getCurrentPlayer())
         self.assertEqual(len(solver.solution.board['groups']), 1)

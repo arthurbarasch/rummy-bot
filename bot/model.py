@@ -272,7 +272,7 @@ class RummyModel:
     # Adds the input tile to an available run available
     # If two available runs for such tile, use the input value 'isLongest' to establish which run
     # to add the tile to (the longest or shortest run)
-    def addToRun(self, tile, isLongest):
+    def addToRun(self, tile, isLongest=True):
         run1 = None
         run2 = None
 
