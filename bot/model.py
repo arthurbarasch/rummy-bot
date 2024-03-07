@@ -5,6 +5,7 @@ import json
 import logging
 from bot.player import RummyPlayer
 from flask import jsonify
+from functools import reduce
 
 # Variables
 
@@ -81,6 +82,7 @@ class RummyModel:
         logging.warning("Copying solution from board score {} to board score {} ({} player tiles used this round)".format(previous.getBoardScore(), self.getBoardScore(),len(tiles)))
         self.players[self.playerTurn] = tiles
         self.correctDrawPile()
+        assert self.getBoardScore() == model.getBoardScore()
 
     # Makes sure that the draw pile has the correct tiles after a player makes a move.
     def correctDrawPile(self):
@@ -201,18 +203,27 @@ class RummyModel:
 
     # Add a random group or run to the board (given available tiles on the draw pile)
     # return the number of points in the hand added
-    def addRandomHand(self, group=None):
+    def addRandomHand(self, group=None, useDrawPile=True):
         hand = None
+        counter = 0
         while (hand is None) or not (self.addRun(hand) or self.addGroup(hand)):
-            if random.random() > 0.5 and group is None:
+            counter+=1
+            if counter>100:
+                return 0
+
+            if random.random() > 0.5 and not group:
                 tile = random.choice(self.drawPile)
-                length = random.randrange(3, 6)
-                if tile[1]+length>n:
+                length = random.randrange(3, 5)
+                if tile[1]+length > n:
                     continue
-                hand = [(tile[0], val) for val in range(tile[1], tile[1]+length)]
+                hand = [(tile[0], val) for val in range(tile[1], min(tile[1]+length, n))]
             else:
                 tile = random.choice(self.drawPile)
                 hand = [(suit, tile[1]) for suit in K]
+
+            if useDrawPile and reduce(lambda a,b:a and b ,[tile in self.drawPile for tile in hand]):
+                hand = None
+
         score = 0
         for tile in hand:
             score += tile[1]
@@ -322,6 +333,18 @@ class RummyModel:
         # if tilesToAdd != 0:
         #     logging.warning('RummyModel.addToRuns: Cannot insert tiles on runs. Tiles left -> {}'.format(tilesToAdd))
         # return tilesToAdd == 0
+
+    def isValid(self):
+        count = np.zeros((k,n))
+        for run in self.board["runs"]:
+            for suit,value in run:
+                count[suit-1,value-1]+=1
+
+                if count[suit-1,value-1] > m:
+                    logging.error(f'ERROR: Board is not valid. Found more than {m} occurrences of tile {(suit,value)}')
+                    return False
+
+        return True
 
 
     # Checks to see if all groups and runs on the board are valid

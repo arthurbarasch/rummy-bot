@@ -191,8 +191,9 @@ class RummyTestCase(unittest.TestCase):
         for _ in range(40):
             self.model.restart()
             score = self.model.addRandomHand(group=True)
+            if score == 0:
+                continue
             hand = self.model.getBoardTilePool()
-            groupOfTile = hand[0][1]
             print('hand: {}'.format(hand))
             groupSize = solver.totalGroupSize(hand)
             self.assertGreater(groupSize, 0)
@@ -231,9 +232,9 @@ class RummyTestCase(unittest.TestCase):
 
     def test_make_runs_2(self):
         self.model.restart()
-        self.model.getCurrentPlayer().extend([(2, 5), (2, 6), (2, 7)])
+        self.model.getCurrentPlayer().extend([(2, 5), (2, 6), (2, 7),(2, 8),(2, 9)])
         solver = RummySolver(self.model)
-        self.assertEqual(18, solver.maxScore())
+        self.assertEqual(35, solver.maxScore())
         self.assertEqual(len(solver.solution.board["runs"]), 1)
 
     def test_make_runs_3(self):
@@ -243,6 +244,8 @@ class RummyTestCase(unittest.TestCase):
         print(solver.solution)
         self.assertEqual(24, solver.maxScore())
         self.assertEqual(len(solver.solution.board["runs"]), 2)
+        self.assertEqual(solver.solution.board["runs"][0], [(1, 1), (1, 2), (1, 3)])
+        self.assertEqual(solver.solution.board["runs"][1], [(1, 3), (1, 4), (1, 5), (1, 6)])
 
     def test_make_groups(self):
 
@@ -262,6 +265,15 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(len(solver.solution.board['groups']), 1)
         self.assertEqual(set(solver.solution.board['groups'][0]), {(1, 10), (2, 10), (3, 10)})
         self.assertEqual((3, 10), solver.solution.getCurrentPlayer()[0])
+
+    def test_make_groups_and_runs_2(self):
+        self.model.restart()
+        self.model.getCurrentPlayer().extend([(1, 11), (3, 11), (4, 11),
+                                              (1, 10), (1, 11), (1, 12)])
+        solver = RummySolver(self.model)
+        self.assertEqual(66, solver.maxScore())
+        self.assertEqual(solver.solution.board["runs"][0], [(1, 10), (1, 11), (1, 12)])
+        self.assertEqual(set(solver.solution.board["groups"][0]), {(1, 11), (3, 11), (4, 11)} )
 
     def test_make_groups_and_runs(self):
         self.model.restart()

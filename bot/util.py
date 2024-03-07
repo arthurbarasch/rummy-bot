@@ -26,6 +26,8 @@ def getChildren(runs,tilesAvailable):
             if ms not in children:
                 children.append(ms)
 
+
+
     if runs == MS([0,0]) or runs == MS([0,3]) or runs == MS([3,3]):
         children.append(MS([0,0]))
 
