@@ -152,11 +152,11 @@ class RummySolver:
 
         print(self.solution.getBoardAsArray())
 
-        if score != self.solution.getBoardScore():
-            for tile in self.solution.getCurrentPlayer().tiles:
-                if self.solution.addToRun(tile):
-                    self.solution.getCurrentPlayer().remove(tile)
-                    print('ADDED A MISSING TILE')
+        # if score != self.solution.getBoardScore():
+        #     for tile in self.solution.getCurrentPlayer().tiles:
+        #         if self.solution.addToRun(tile):
+        #             self.solution.getCurrentPlayer().remove(tile)
+        #             print('ADDED A MISSING TILE')
 
         assert self.solution.isValid()
         # assert score == self.solution.getBoardScore()
@@ -306,7 +306,6 @@ class RummySolver:
 
     def getNumNewRunsAndTiles(self,prevRun, nextRun):
         p2 = prevRun.get(2,0)
-        # n2 = list(nextRun).count(2)
         p3 = prevRun.get(3,0)
         n3 = nextRun.get(3,0)
 
@@ -314,27 +313,6 @@ class RummySolver:
         num_only_tiles = p3 if 0 < p3 <= n3 else 0
 
         return num_new_runs, num_only_tiles
-
-    # # (Destructive method) Updates the runs array given input tile and value of m, and returns the score added
-    # # Also, keeps track of tiles used in the solution
-    # def updateRun(self, runs, tile, M):
-    #     suit, value = tile
-    #     runVal = runs[suit - 1, M]
-    #
-    #     if runVal == 0:
-    #         if value + 2 > n:
-    #             # No need to start a new run if we know we can't finish it
-    #             return 0
-    #         runs[suit - 1, M] += 1
-    #         return 0
-    #     elif runVal == 1:  # If current length of run 0 or 1, increase length by one
-    #         runs[suit - 1, M] += 1
-    #         return 0
-    #     elif runVal == 2:  # If current length of run 2, increase length by one and make it a valid run (summing the score so far)
-    #         runs[suit - 1, M] += 1
-    #         return (value - 2) + (value - 1) + value
-    #     elif runVal >= 3:  # If current length of run 3 (which can also mean more than 3), increase the score by the current tile value
-    #         return value
 
     # Return the total group size that can be formed from the given 'hand'
     def totalGroupSize(self, hand):
@@ -391,8 +369,10 @@ class RummySolver:
         temp = scores[0]
         for s in scores:
             if s != temp:
+                # print(f'{value} {scores}')
                 # assert False
                 return -math.inf
+                # return 0
 
         return temp
 
@@ -468,9 +448,9 @@ class RummySolver:
 
                 if value == 6:
                     print('NUM NEW TILES')
-                    print(num_new_tiles)
                     print(prevRuns[j])
                     print(nextRuns[j])
+                    print(num_new_tiles)
 
                 while num_new_runs>0:
                     suit = j+1
@@ -481,8 +461,6 @@ class RummySolver:
                 while num_new_tiles>0:
                     suit = j+1
                     hand.remove((suit,value))
-                    if value == 6:
-                        print('YEEEASSSSSS')
                     solution.addToRun((suit,value))
                     num_new_tiles -= 1
 

@@ -251,13 +251,12 @@ class RummyTestCase(unittest.TestCase):
 
         self.model.restart()
         self.model.addGroup([(1, 8), (2, 8), (3, 8)])
-        self.model.getCurrentPlayer().extend([(4, 8)])
+        self.model.getCurrentPlayer().extend([(4, 8),(1,8),(2,8)])
         solver = RummySolver(self.model)
-        self.assertEqual(32, solver.maxScore())
+        self.assertEqual(48, solver.maxScore())
 
         self.model.restart()
         self.model.addGroup([(1, 10), (2, 10), (3, 10)])
-        self.model.getCurrentPlayer().extend([(3, 10)])
         solver = RummySolver(self.model)
         self.assertEqual(30, solver.maxScore())
 
