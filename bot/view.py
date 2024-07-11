@@ -1,7 +1,8 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from solver import RUN_CONFIGS
-from model import k,n,m, COLORS
+from solver import RUN_CONFIGS, RummySolver
+import random
+from model import k, n, m, COLORS, RummyModel
 
 
 def getDotNode(arr):
@@ -45,3 +46,18 @@ def plot_runs_graph(ordered_runs):
         plt.yticks(range(10),[list(r) for r in RUN_CONFIGS])
 
         plt.show()
+
+
+def plot_times_graph():
+    solver = RummySolver()
+    model = RummyModel()
+    for i in range(14,50):
+        for x in range(50):
+            model.restart()
+            tiles = random.choices(model.drawPile,i)
+            model.getCurrentPlayer().extend(tiles)
+
+
+
+
+

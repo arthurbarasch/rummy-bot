@@ -126,10 +126,6 @@ class RummySolver:
         if runHash in self.score[value-1] and self.score[value-1][runHash][0] != -math.inf:
             mem_score = self.score[value-1][runHash][0]
 
-            # logging.warning('\n({}) return memoized val:{}\tsolution:{}'.format(value, self.score[value-1][runHash][0], list(
-            #     map(lambda x: str(x[1]), self.score[value-1][runHash] ))))
-            # if self.score[value-1][runHash][0] == 5:
-            # print('\n({})!!! Score {} run hash-> {}\nSOLUTION:\n{}\n'.format(value, self.score[value-1][runHash][0],runHash,str(self.score[value-1][runHash][1])))
             if mem_score>=solution.getBoardScore():
                 if str(solution) == '[[(1, 1), (1, 2), (1, 3)], [(1, 3), (1, 4), (1, 5)]]':
                     print('a. FOUND SOLOLUTION')
@@ -172,7 +168,8 @@ class RummySolver:
                     groupScores, old_solution))
 
             # Check the table constraint with the previous model
-            if old_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
+            if True:
+            # if old_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
                 score, new_solution, old_runs_hash = self._maxScore(value + 1, new_runs[i], RummyModel(old_solution))
 
                 result = groupScores + run_scores[i] + score

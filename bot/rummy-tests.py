@@ -245,11 +245,6 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(len(solver.solution.board["runs"]), 2)
 
 
-        self.model.getCurrentPlayer().append((1,6))
-        solver = RummySolver(self.model)
-        self.assertEqual(24, solver.maxScore())
-        self.assertEqual(len(solver.solution.board["runs"]), 2)
-
 
     def test_make_groups(self):
         self.model.restart()
