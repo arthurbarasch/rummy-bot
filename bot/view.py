@@ -4,6 +4,7 @@ from solver import RUN_CONFIGS, RummySolver
 import random
 from model import k, n, m, COLORS, RummyModel
 
+import time
 
 def getDotNode(arr):
     # Change formatting to HTML for .dot
@@ -49,15 +50,35 @@ def plot_runs_graph(ordered_runs):
 
 
 def plot_times_graph():
-    solver = RummySolver()
-    model = RummyModel()
-    for i in range(14,50):
-        for x in range(50):
-            model.restart()
-            tiles = random.choices(model.drawPile,i)
+
+    data = []
+    padding = 12
+
+    sample_range = range(padding,53,2)
+
+    for i in sample_range:
+        data.append([])
+        for x in range(60):
+            model = RummyModel()
+            tiles = random.choices(model.drawPile,k=i)
             model.getCurrentPlayer().extend(tiles)
 
+            solver = RummySolver(model)
 
+            try:
+                solver.maxScore()
+            except AssertionError:
+                continue
+            else:
+                data[-1].append(sum(solver.counter))
+
+    plt.boxplot(data,showfliers=False)
+    plt.title(f"Search tree nodes given input size")
+    plt.xlabel("Input size (number of tiles)")
+    plt.ylabel("Number of nodes calculated")
+    plt.xticks(range(len(data)),list(sample_range))
+
+    plt.show()
 
 
 
