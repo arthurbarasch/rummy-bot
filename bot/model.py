@@ -24,7 +24,7 @@ N = list(range(1, n+1))  # Set of numbered values
 
 class RummyModel:
     def __init__(self,model=None):
-        assert model is None or isinstance(model,RummyModel)
+        # assert model is None or isinstance(model,RummyModel)
         self.board = {'runs': [], 'groups': []} if not model else self.getBoardCopy(model.board)
 
         self.playerTurn = 0 if not model else model.playerTurn
@@ -194,7 +194,9 @@ class RummyModel:
         # # Tiles present on unfinished runs
         for t in temp:
             suit, value = t
-            if runs[suit-1][0] == 0 and runs[suit-1][0] == 0:
+            if sum(runs[suit-1]) == 0:
+                # If the tile already present at the board, is not being used in groups or runs,
+                # the table constraint is violated
                 return False
 
         return True
