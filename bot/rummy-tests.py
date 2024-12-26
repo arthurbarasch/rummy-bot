@@ -309,7 +309,7 @@ class RummyTestCase(unittest.TestCase):
         solution, ordered_runs = solver.traceSolution()
         print(solution)
         plot_runs_graph(ordered_runs)
-
+    #
     # def test_make_runs_all_tiles(self):
     #     self.model.restart()
     #     self.model.giveAllTilesToCurrentPlayer()
