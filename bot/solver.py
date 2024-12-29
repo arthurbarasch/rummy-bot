@@ -14,6 +14,7 @@ def MS(data):
 
 RUN_CONFIGS = [MS([0, 0]), MS([0, 1]), MS([0, 2]), MS([0, 3]), MS([1, 1]), MS([1, 2]), MS([1, 3]), MS([2, 2]), MS([2, 3]), MS([3, 3])]
 
+
 class RummySolver:
 
     def __init__(self, model: RummyModel):
