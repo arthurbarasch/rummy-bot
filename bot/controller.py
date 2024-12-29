@@ -13,7 +13,7 @@ class RummyController:
 
         self.gameMode = game_mode
         self.model = model
-        self.solver = RummySolver(self.model)
+        self.solvers = RummySolver(self.model)
         self.botPlayer = NUM_PLAYERS - 1
 
     def init(self, model: RummyModel):

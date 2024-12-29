@@ -52,13 +52,15 @@ def plot_runs_graph(ordered_runs):
 def plot_times_graph():
 
     data = []
+    times = []
     padding = 12
 
     sample_range = range(padding,53,2)
 
     for i in sample_range:
         data.append([])
-        for x in range(60):
+        times.append([])
+        for x in range(80):
             model = RummyModel()
             tiles = random.choices(model.drawPile,k=i)
             model.getCurrentPlayer().extend(tiles)
@@ -66,18 +68,29 @@ def plot_times_graph():
             solver = RummySolver(model)
 
             try:
+                start_time = time.time()
                 solver.maxScore()
+                duration = time.time()-start_time
             except AssertionError:
+                print("AssertionError")
                 continue
             else:
                 data[-1].append(sum(solver.counter))
+                times[-1].append(duration)
 
     plt.boxplot(data,showfliers=False)
     plt.title(f"Search tree nodes given input size")
     plt.xlabel("Input size (number of tiles)")
     plt.ylabel("Number of nodes calculated")
     plt.xticks(range(len(data)),list(sample_range))
+    plt.show()
 
+    avg_times = [np.mean(t) for t in times]
+    plt.plot(avg_times)
+    plt.title(f"Execution duration")
+    plt.xlabel("Input size (number of tiles)")
+    plt.ylabel("Duration (in ms)")
+    plt.xticks(range(len(avg_times)),list(sample_range))
     plt.show()
 
 

@@ -244,7 +244,13 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(18, solver.maxScore())
         self.assertEqual(len(solver.solution.board["runs"]), 2)
 
-
+    def test_make_runs_4(self):
+        self.model.restart()
+        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 3)])
+        solver = RummySolver(self.model)
+        print(solver.solution)
+        self.assertEqual(24, solver.maxScore())
+        self.assertEqual(len(solver.solution.board["runs"]), 2)
 
     def test_make_groups(self):
         self.model.restart()
@@ -308,7 +314,11 @@ class RummyTestCase(unittest.TestCase):
         solver.maxScore()
         solution, ordered_runs = solver.traceSolution()
         print(solution)
-        plot_runs_graph(ordered_runs)
+        # plot_runs_graph(ordered_runs)
+
+    def test_plot_graphs(self):
+        plot_times_graph()
+
     #
     # def test_make_runs_all_tiles(self):
     #     self.model.restart()

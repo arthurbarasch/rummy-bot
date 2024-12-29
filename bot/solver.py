@@ -28,6 +28,8 @@ class RummySolver:
 
         self.graph = ''
 
+        self.enable_optimizations = True
+
         self.otherSolutions = []
 
     def setModel(self, model: RummyModel):
@@ -168,8 +170,7 @@ class RummySolver:
                     groupScores, old_solution))
 
             # Check the table constraint with the previous model
-            if True:
-            # if old_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
+            if old_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value) or not self.enable_optimizations:
                 score, new_solution, old_runs_hash = self._maxScore(value + 1, new_runs[i], RummyModel(old_solution))
 
                 result = groupScores + run_scores[i] + score
@@ -182,7 +183,6 @@ class RummySolver:
                 if runHash not in self.score[value-1] or result > self.score[value-1][runHash][0]:
                     if self.CONFIG['output_graph'] and new_solution.getBoardScore()>=solution.getBoardScore():
                         self.addToGraphTree(value, runHash, new_runs[i], old_solution)
-                    # print(f'\nAt value {value} ----> {result} > {self.score[value-1][runHash][0]}\n')
                     self.score[value-1][runHash] = (result, new_solution, self.getRunHash(new_runs[i]))
 
 

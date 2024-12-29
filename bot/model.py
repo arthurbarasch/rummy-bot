@@ -9,7 +9,7 @@ from flask import jsonify
 # Variables
 
 NUM_STARTING_TILES = 14
-NUM_PLAYERS = 2
+NUM_PLAYERS = 3
 m = 2  # Number of copies of the full tile set (without jokers)
 j = 0  # Number of jokers
 n = 13  # Number of different numbered values of tiles
