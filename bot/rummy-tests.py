@@ -247,6 +247,15 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(solver.solution.board["runs"][0], [(1, 1), (1, 2), (1, 3)])
         self.assertEqual(solver.solution.board["runs"][1], [(1, 3), (1, 4), (1, 5), (1, 6)])
 
+    def test_make_runs_4(self):
+        self.model.restart()
+        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 3)])
+        solver = RummySolver(self.model)
+        print(solver.solution)
+        self.assertEqual(24, solver.maxScore())
+        self.assertEqual(len(solver.solution.board["runs"]), 2)
+
+
     def test_make_groups(self):
 
         self.model.restart()
