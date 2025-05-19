@@ -17,6 +17,7 @@ j = 0  # Number of jokers
 n = 13  # Number of different numbered values of tiles
 k = 4  # Number of different suits
 s = 3  # Minimal set size
+COLORS = ['black','blue', 'yellow', 'red']
 
 # Sets
 K = list(range(1, k+1))  # Set of suits

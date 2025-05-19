@@ -1,5 +1,5 @@
 import multiset
-from .model import m
+from model import m
 
 def MS(data):
     return multiset.Multiset(data)

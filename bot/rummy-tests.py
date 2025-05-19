@@ -7,7 +7,9 @@ import multiset
 import numpy as np
 
 from bot import RummyModel, RummySolver, RummyController, runRummyGame, k, K, m, n, N, NUM_PLAYERS, NUM_STARTING_TILES
-from bot.util import getChildren, MS
+from util import getChildren, MS
+
+from view import *
 
 
 class RummyTestCase(unittest.TestCase):
@@ -333,6 +335,9 @@ class RummyTestCase(unittest.TestCase):
         self.model.initNewRun((1, 13))
         solver = RummySolver(self.model)
         self.assertLessEqual(solver.maxScore(), 0)
+
+    def test_plot_graphs(self):
+        plot_times_graph()
 
     # def test_make_runs_all_tiles(self):
     #     self.model.restart()

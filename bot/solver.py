@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import multiset
 import collections
-from .util import MS, getChildren
+from util import MS, getChildren
 
 RUN_CONFIGS = [MS([0, 0]), MS([0, 1]), MS([0, 2]), MS([0, 3]), MS([1, 1]), MS([1, 2]), MS([1, 3]), MS([2, 2]), MS([2, 3]), MS([3, 3])]
 
