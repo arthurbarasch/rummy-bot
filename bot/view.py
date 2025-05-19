@@ -57,7 +57,7 @@ def plot_times_graph():
 
     padding = 12
 
-    sample_range = range(padding,53,2)
+    sample_range = range(padding,30,2)
     repetitions = 10
 
     for i in sample_range:
