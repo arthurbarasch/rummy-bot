@@ -55,14 +55,19 @@ def plot_times_graph():
     times = []
     scores = []
 
+    states_opt = []
+    times_opt = []
+
     padding = 12
 
-    sample_range = range(padding,30,2)
-    repetitions = 10
+    sample_range = range(padding,40,5)
+    repetitions = 20
 
     for i in sample_range:
         states.append([])
         times.append([])
+        states_opt.append([])
+        times_opt.append([])
         scores.append([])
         for x in range(repetitions):
             model = RummyModel()
@@ -83,7 +88,24 @@ def plot_times_graph():
                 times[-1].append(duration)
                 scores[-1].append(max(score,0))
 
-    plt.boxplot(states,showfliers=False)
+
+            solver = RummySolver(model,enabled_optimizations=True)
+            try:
+                start_time = time.time()
+                duration = time.time()-start_time
+            except AssertionError:
+                print("AssertionError")
+                continue
+            else:
+                states_opt[-1].append(sum(solver.counter))
+                times_opt[-1].append(duration)
+
+    avg_states = [np.mean(s) for s in states]
+    avg_states_opt = [np.mean(s) for s in states_opt]
+
+    plt.plot(avg_states,label='Legacy')
+    plt.plot(avg_states_opt,label='Optimized')
+    plt.legend(loc="upper left")
     plt.title(f"Search tree nodes given input size")
     plt.xlabel("Input size (number of tiles)")
     plt.ylabel("Number of nodes calculated")
@@ -91,7 +113,11 @@ def plot_times_graph():
     plt.show()
 
     avg_times = [np.mean(t) for t in times]
-    plt.plot(avg_times)
+    avg_times_opt = [np.mean(t) for t in times_opt]
+
+    plt.plot(avg_times,label='Legacy')
+    plt.plot(avg_times_opt,label='Optimized')
+    plt.legend(loc="upper left")
     plt.title(f"Execution duration")
     plt.xlabel("Input size (number of tiles)")
     plt.ylabel("Duration (in ms)")
@@ -107,3 +133,4 @@ def plot_times_graph():
     plt.ylabel("Score")
     plt.xticks(range(len(avg_scores)),list(sample_range))
     plt.show()
+

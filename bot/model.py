@@ -25,7 +25,7 @@ N = list(range(1, n+1))  # Set of numbered values
 
 
 class RummyModel:
-    def __init__(self,model=None):
+    def __init__(self,model=None, enabled_optimizations=False):
         assert model is None or isinstance(model,RummyModel)
         self.board = {'runs': [], 'groups': []} if not model else self.getBoardCopy(model.board)
 

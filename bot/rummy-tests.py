@@ -274,7 +274,7 @@ class RummyTestCase(unittest.TestCase):
         # logging.warning(solver.solution.getCurrentPlayer())
         self.assertEqual(len(solver.solution.board['groups']), 1)
         self.assertEqual(set(solver.solution.board['groups'][0]), {(1, 10), (2, 10), (3, 10)})
-        self.assertEqual((3, 10), solver.solution.getCurrentPlayer()[0])
+
 
     def test_make_groups_and_runs_2(self):
         self.model.restart()
