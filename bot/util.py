@@ -5,11 +5,8 @@ def MS(data):
     return multiset.Multiset(data)
 
 def getChildren(runs,tilesAvailable):
-
     children = []
-
     runs_list = list(runs)
-
 
     if tilesAvailable == 2:
         children.append(MS( list(map(lambda a: min(a+1, 3), runs_list)) ))

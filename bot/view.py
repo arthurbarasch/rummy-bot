@@ -50,7 +50,6 @@ def plot_runs_graph(ordered_runs):
 
 
 def plot_times_graph():
-
     states = []
     times = []
     scores = []
@@ -60,8 +59,8 @@ def plot_times_graph():
 
     padding = 12
 
-    sample_range = range(padding,40,5)
-    repetitions = 20
+    sample_range = range(padding,40,10)
+    repetitions = 5
 
     for i in sample_range:
         states.append([])
@@ -69,21 +68,23 @@ def plot_times_graph():
         states_opt.append([])
         times_opt.append([])
         scores.append([])
+
         for x in range(repetitions):
             model = RummyModel()
-            tiles = random.choices(model.drawPile,k=i)
+            tiles = random.choices(model.drawPile, k=i)
             model.getCurrentPlayer().extend(tiles)
 
             solver = RummySolver(model)
+            score = 0
 
             try:
                 start_time = time.time()
                 score = solver.maxScore()
-                duration = time.time()-start_time
             except AssertionError:
                 print("AssertionError")
-                continue
-            else:
+                # continue
+            finally:
+                duration = time.time()-start_time
                 states[-1].append(sum(solver.counter))
                 times[-1].append(duration)
                 scores[-1].append(max(score,0))
@@ -92,16 +93,22 @@ def plot_times_graph():
             solver = RummySolver(model,enabled_optimizations=True)
             try:
                 start_time = time.time()
-                duration = time.time()-start_time
+                score = solver.maxScore()
             except AssertionError:
                 print("AssertionError")
                 continue
-            else:
+            finally:
+                duration = time.time()-start_time
                 states_opt[-1].append(sum(solver.counter))
                 times_opt[-1].append(duration)
 
+
     avg_states = [np.mean(s) for s in states]
     avg_states_opt = [np.mean(s) for s in states_opt]
+    print("Plotting graphs...")
+    print(avg_states)
+    print(avg_states_opt)
+
 
     plt.plot(avg_states,label='Legacy')
     plt.plot(avg_states_opt,label='Optimized')
@@ -114,6 +121,8 @@ def plot_times_graph():
 
     avg_times = [np.mean(t) for t in times]
     avg_times_opt = [np.mean(t) for t in times_opt]
+    print(avg_times)
+    print(avg_times_opt)
 
     plt.plot(avg_times,label='Legacy')
     plt.plot(avg_times_opt,label='Optimized')

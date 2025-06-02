@@ -14,11 +14,12 @@ RUN_CONFIGS = [MS([0, 0]), MS([0, 1]), MS([0, 2]), MS([0, 3]), MS([1, 1]), MS([1
 
 class RummySolver:
 
-    def __init__(self, model: RummyModel):
+    def __init__(self, model: RummyModel, enabled_optimizations=False):
         self.CONFIG = {'output_graph': True}
         self.model = model
         self.score = np.full((n,k,f_of_m), -math.inf)
         self.solutions = []
+        self.enabled_optimizations = enabled_optimizations
 
         self.counter = []
         for i in range(n):
@@ -35,10 +36,10 @@ class RummySolver:
 
     def displayCounter(self):
         for i, c in enumerate(self.counter):
-            print(str(i+1) + '. ' + '*' * c)
+            logging.debug(str(i+1) + '. ' + '*' * c)
 
     def exportScoreHeatmap(self):
-        print('Exporting heatmap...')
+        logging.debug('Exporting heatmap...')
 
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
@@ -67,10 +68,10 @@ class RummySolver:
 
         plt.show()
         plt.savefig('output/score.png')
-        print('Exported heatmap.')
+        logging.debug('Exported heatmap.')
 
     def exportGraphTree(self):
-        print('Exporting graph...')
+        logging.debug('Exporting graph...')
         # for i in range(n):
         #     arr = [ str(i+1)+'.'+k for k in list(self.score[i])]
         #     self.graph += '{rank=same; '+' '.join(arr)+'}\n'
@@ -137,11 +138,11 @@ class RummySolver:
             return 0
 
         hand = self.model.getTotalTilePool() if not quarantine else self.model.getCurrentPlayer().getTilePool()
-        print('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
+        logging.debug('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
 
         score = self._maxScore(quarantine=quarantine)
-        print('Max Score found: '+str(score))
-        print(self.solutions)
+        logging.debug('Max Score found: '+str(score))
+        logging.debug(self.solutions)
 
         self.displayCounter()
         self.solution = self.traceSolution()
@@ -150,13 +151,13 @@ class RummySolver:
             # self.exportScoreHeatmap()
             self.exportGraphTree()
 
-        print(self.solution.getBoardAsArray())
+        logging.debug(self.solution.getBoardAsArray())
 
         # if score != self.solution.getBoardScore():
         #     for tile in self.solution.getCurrentPlayer().tiles:
         #         if self.solution.addToRun(tile):
         #             self.solution.getCurrentPlayer().remove(tile)
-        #             print('ADDED A MISSING TILE')
+        #             logging.debug('ADDED A MISSING TILE')
 
         assert self.solution.isValid()
         # assert score == self.solution.getBoardScore()
@@ -171,10 +172,10 @@ class RummySolver:
 
         # Base case: memoization stored in 'score' array
 
-        # print('length array {} and index {}'.format(len(self.score[value - 1]),runsIndex))
+        # logging.debug('length array {} and index {}'.format(len(self.score[value - 1]),runsIndex))
         mem_score = self.getScoreFromRuns(value, runs)
         if mem_score > -math.inf:
-            # print(f'Returning memorized score[{value},{self.getRunHash(runs)}]')
+            # logging.debug(f'Returning memorized score[{value},{self.getRunHash(runs)}]')
             return mem_score
 
 
@@ -298,7 +299,7 @@ class RummySolver:
                 # l = runs[:]
                 # l.append(child)
                 final.append(list(d))
-                # print(f'RUN {run} \nCHILD {child} \nFINAL {final}')
+                # logging.debug(f'RUN {run} \nCHILD {child} \nFINAL {final}')
 
 
         return final
@@ -369,7 +370,7 @@ class RummySolver:
         temp = scores[0]
         for s in scores:
             if s != temp:
-                # print(f'{value} {scores}')
+                # logging.debug(f'{value} {scores}')
                 # assert False
                 return -math.inf
                 # return 0
@@ -422,9 +423,9 @@ class RummySolver:
     def traceSolution(self):
         solution = RummyModel()
         prevRuns = [MS([0,0]),MS([0,0]),MS([0,0]),MS([0,0])]
-        print('Tracing solution...')
+        logging.debug('Tracing solution...')
         for i in range(n):
-            print(i)
+            logging.debug(i)
             value = i+1
 
             hand = self.model.getTotalTilePool(filter_value=value)
@@ -447,10 +448,10 @@ class RummySolver:
                 num_new_runs, num_new_tiles = self.getNumNewRunsAndTiles(prevRuns[j],nextRuns[j])
 
                 if value == 6:
-                    print('NUM NEW TILES')
-                    print(prevRuns[j])
-                    print(nextRuns[j])
-                    print(num_new_tiles)
+                    logging.debug('NUM NEW TILES')
+                    logging.debug(prevRuns[j])
+                    logging.debug(nextRuns[j])
+                    logging.debug(num_new_tiles)
 
                 while num_new_runs>0:
                     suit = j+1
