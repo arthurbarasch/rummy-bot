@@ -14,12 +14,12 @@ RUN_CONFIGS = [MS([0, 0]), MS([0, 1]), MS([0, 2]), MS([0, 3]), MS([1, 1]), MS([1
 
 class RummySolver:
 
-    def __init__(self, model: RummyModel, enabled_optimizations=False):
+    def __init__(self, model: RummyModel, track_solution=True):
         self.CONFIG = {'output_graph': True}
         self.model = model
         self.score = np.full((n,k,f_of_m), -math.inf)
         self.solutions = []
-        self.enabled_optimizations = enabled_optimizations
+        self.track_solution = track_solution
 
         self.counter = []
         for i in range(n):
@@ -138,20 +138,22 @@ class RummySolver:
             return 0
 
         hand = self.model.getTotalTilePool() if not quarantine else self.model.getCurrentPlayer().getTilePool()
-        logging.debug('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
+        print('Running MaxScore with tiles (quarantine={}):\n\t-{}'.format(quarantine,hand))
 
         score = self._maxScore(quarantine=quarantine)
         logging.debug('Max Score found: '+str(score))
         logging.debug(self.solutions)
 
         self.displayCounter()
-        self.solution = self.traceSolution()
+
+        if self.track_solution:
+            self.solution = self.traceSolution()
+            logging.debug(self.solution.getBoardAsArray())
 
         if self.CONFIG['output_graph']:
             # self.exportScoreHeatmap()
             self.exportGraphTree()
 
-        logging.debug(self.solution.getBoardAsArray())
 
         # if score != self.solution.getBoardScore():
         #     for tile in self.solution.getCurrentPlayer().tiles:
@@ -159,7 +161,7 @@ class RummySolver:
         #             self.solution.getCurrentPlayer().remove(tile)
         #             logging.debug('ADDED A MISSING TILE')
 
-        assert self.solution.isValid()
+        assert not self.track_solution or self.solution.isValid()
         # assert score == self.solution.getBoardScore()
         return score
 
@@ -193,7 +195,7 @@ class RummySolver:
 
 
         if len(new_runs) == 0:
-            if runHash not in self.solutions[value - 1]:
+            if self.track_solution and runHash not in self.solutions[value - 1]:
                 self.solutions[value - 1][runHash] = '0'*k
             return 0
             # self.setScoreFromRuns(0,value,runs)
@@ -221,7 +223,8 @@ class RummySolver:
             # If new-found result is bigger than the one being stored in the score array, save it
             if result > mem_score:
                 self.setScoreFromRuns(result, value, runs)
-                self.solutions[value-1][runHash] = self.getRunHash(new_runs[i])
+                if self.track_solution:
+                    self.solutions[value-1][runHash] = self.getRunHash(new_runs[i])
                 # self.solutions[value - 1][str(hash(str(runs)))] = self.getIndexFromRuns(new_runs[i])
 
             assert groupScores >= 0
@@ -390,7 +393,6 @@ class RummySolver:
     @staticmethod
     def getRunHash(runs):
         h = ''
-
         for i in range(k):
             h += str(RUN_CONFIGS.index(runs[i]))
 
@@ -432,7 +434,8 @@ class RummySolver:
 
             prevHash = self.getRunHash(prevRuns)
             if prevHash not in self.solutions[i]:
-                logging.error('Could not find the solution. Hash nr '+prevHash)
+                if prevHash != '0000':
+                    logging.error('Could not find the solution. Hash nr '+prevHash)
                 continue
 
             if len(self.solutions[i]) == 0 or prevHash not in self.solutions[i]:
@@ -446,12 +449,6 @@ class RummySolver:
 
             for j in range(k):
                 num_new_runs, num_new_tiles = self.getNumNewRunsAndTiles(prevRuns[j],nextRuns[j])
-
-                if value == 6:
-                    logging.debug('NUM NEW TILES')
-                    logging.debug(prevRuns[j])
-                    logging.debug(nextRuns[j])
-                    logging.debug(num_new_tiles)
 
                 while num_new_runs>0:
                     suit = j+1

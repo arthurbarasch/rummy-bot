@@ -59,8 +59,8 @@ def plot_times_graph():
 
     padding = 12
 
-    sample_range = range(padding,40,10)
-    repetitions = 5
+    sample_range = range(padding,43,3)
+    repetitions = 10
 
     for i in sample_range:
         states.append([])
@@ -70,17 +70,19 @@ def plot_times_graph():
         scores.append([])
 
         for x in range(repetitions):
+
+            print(f'Input size = {i}\nRepetition number = {x}\n')
             model = RummyModel()
             tiles = random.choices(model.drawPile, k=i)
             model.getCurrentPlayer().extend(tiles)
 
-            solver = RummySolver(model)
+            solver = RummySolver(model,track_solution=False)
             score = 0
 
             try:
                 start_time = time.time()
                 score = solver.maxScore()
-            except AssertionError:
+            except AssertionError as e:
                 print("AssertionError")
                 # continue
             finally:
@@ -90,13 +92,13 @@ def plot_times_graph():
                 scores[-1].append(max(score,0))
 
 
-            solver = RummySolver(model,enabled_optimizations=True)
+            solver = RummySolver(model,track_solution=True)
             try:
                 start_time = time.time()
                 score = solver.maxScore()
-            except AssertionError:
+            except AssertionError as e:
                 print("AssertionError")
-                continue
+                # print(e)
             finally:
                 duration = time.time()-start_time
                 states_opt[-1].append(sum(solver.counter))
@@ -110,8 +112,8 @@ def plot_times_graph():
     print(avg_states_opt)
 
 
-    plt.plot(avg_states,label='Legacy')
-    plt.plot(avg_states_opt,label='Optimized')
+    # plt.plot(avg_states,label='Score only')
+    plt.plot(avg_states_opt)
     plt.legend(loc="upper left")
     plt.title(f"Search tree nodes given input size")
     plt.xlabel("Input size (number of tiles)")
@@ -124,13 +126,19 @@ def plot_times_graph():
     print(avg_times)
     print(avg_times_opt)
 
-    plt.plot(avg_times,label='Legacy')
-    plt.plot(avg_times_opt,label='Optimized')
+    scatter_x = [[s]*repetitions for s in list(sample_range)]
+    scatter_x = np.array(scatter_x).flatten()
+    print("Scatter x")
+    print(scatter_x)
+
+    plt.plot(sample_range,avg_times,label='Score only')
+    plt.plot(sample_range,avg_times_opt,label='Solution tracking')
+    plt.scatter(scatter_x,times)
     plt.legend(loc="upper left")
     plt.title(f"Execution duration")
     plt.xlabel("Input size (number of tiles)")
     plt.ylabel("Duration (in ms)")
-    plt.xticks(range(len(avg_times)),list(sample_range))
+    plt.xticks(sample_range,list(sample_range))
     plt.show()
 
 

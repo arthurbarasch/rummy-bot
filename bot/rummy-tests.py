@@ -34,9 +34,9 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(39, solver.maxScore())
 
         self.model.restart()
-        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 3)])
+        self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 3), (1, 6) ])
         solver = RummySolver(self.model)
-        self.assertEqual(18, solver.maxScore())
+        self.assertEqual(24, solver.maxScore())
 
     # Model Tests
     def test_copy_models(self):
@@ -123,12 +123,10 @@ class RummyTestCase(unittest.TestCase):
         self.assertEqual(n, len(N))
         for player in self.model.players:
             self.assertEqual(NUM_STARTING_TILES, len(player))
-
     def test_rummy_params(self):
         self.assertEqual(n, 13)
         self.assertEqual(k, 4)
         self.assertEqual(m, 2)
-
     def test_validate_board(self):
         self.model.restart()
         self.model.addGroup([(1, 1), (2, 1), (3, 1)])
@@ -243,8 +241,8 @@ class RummyTestCase(unittest.TestCase):
         self.model.restart()
         self.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 3), (1,6)])
         solver = RummySolver(self.model)
-        print(solver.solution)
         self.assertEqual(24, solver.maxScore())
+        print(solver.solution)
         self.assertEqual(len(solver.solution.board["runs"]), 2)
         self.assertEqual(solver.solution.board["runs"][0], [(1, 1), (1, 2), (1, 3)])
         self.assertEqual(solver.solution.board["runs"][1], [(1, 3), (1, 4), (1, 5), (1, 6)])
