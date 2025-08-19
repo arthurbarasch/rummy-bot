@@ -57,10 +57,10 @@ def plot_times_graph():
     states_opt = []
     times_opt = []
 
-    padding = 12
+    padding = 3
 
-    sample_range = range(padding,43,3)
-    repetitions = 10
+    sample_range = range(padding,52,3)
+    repetitions = 50
 
     for i in sample_range:
         states.append([])
@@ -70,7 +70,6 @@ def plot_times_graph():
         scores.append([])
 
         for x in range(repetitions):
-
             print(f'Input size = {i}\nRepetition number = {x}\n')
             model = RummyModel()
             tiles = random.choices(model.drawPile, k=i)
@@ -84,7 +83,6 @@ def plot_times_graph():
                 score = solver.maxScore()
             except AssertionError as e:
                 print("AssertionError")
-                # continue
             finally:
                 duration = time.time()-start_time
                 states[-1].append(sum(solver.counter))
@@ -131,8 +129,8 @@ def plot_times_graph():
     print("Scatter x")
     print(scatter_x)
 
-    plt.plot(sample_range,avg_times,label='Score only')
     plt.plot(sample_range,avg_times_opt,label='Solution tracking')
+    plt.plot(sample_range,avg_times,label='Score only')
     plt.scatter(scatter_x,times)
     plt.legend(loc="upper left")
     plt.title(f"Execution duration")
@@ -144,7 +142,7 @@ def plot_times_graph():
 
     avg_scores = [np.mean(s) for s in scores]
 
-    plt.boxplot(avg_scores,showfliers=False)
+    plt.plot(avg_scores)
     plt.title(f"Average score achieved")
     plt.xlabel("Input size (number of tiles)")
     plt.ylabel("Score")

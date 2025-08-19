@@ -132,6 +132,35 @@ class RummySolver:
         newHash = self.getRunHash(newRuns)
         return '{0}.{1} -> {2}.{3}\n{2}.{3} [label={4}]\n'.format(value,oldHash,value+1,newHash, self.getIntermediateSolution(newHash,value))
 
+
+    # Post-processing function to check whether the algorithm
+    # miscalculated the correct solution for runs, and correct them.
+    #
+    # MaxScore does compute the correct score for all runs, however it cannot keep track accurately
+    # of the tiles used due to the "run length" logic used in the design of the algorithm.
+    # Once a run becomes valid (3 tiles) the run length does not increase so a run with more than 3 tiles
+    # is ONLY distinguished by the score, therefore when tracing the solution, longer runs might be cut short
+    # even though their score was calculated correctly.
+    #
+    # This is a mitigation for the solution tracking problem described on the paper under "Future Work"
+    def checkRuns(self,solution:RummyModel):
+        playerTiles = solution.getCurrentPlayer().tiles
+
+        for run in solution.board["runs"]:
+            suit,val = run[0]
+            tile = (suit,val-1)
+            if tile in playerTiles:
+                run.insert(0,tile)
+                playerTiles.remove(tile)
+                print("Fixed run")
+
+            suit,val = run[-1]
+            tile = (suit,val+1)
+            if tile in playerTiles:
+                run.append(tile)
+                playerTiles.remove(tile)
+                print("Fixed run")
+
     def maxScore(self, quarantine=False):
         if len(self.model.getTotalTilePool()) < 3:
             self.solution = RummyModel(self.model)
@@ -149,6 +178,9 @@ class RummySolver:
         if self.track_solution:
             self.solution = self.traceSolution()
             logging.debug(self.solution.getBoardAsArray())
+            self.checkRuns(self.solution)
+
+
 
         if self.CONFIG['output_graph']:
             # self.exportScoreHeatmap()

@@ -63,14 +63,13 @@ class RummyController:
 
 def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     model = RummyModel()
+    model.board["runs"].append([(1, 1), (1, 2), (1, 3)])
+    model.board["runs"].append([(1, 3), (1, 4), (1, 5)])
     controller = RummyController(model, game_mode=game_mode)
-    controller.model.start()
-    tiles = [(3, 1), (1, 1), (3, 2), (1, 2), (4, 3), (3, 3), (1, 3), (3, 4), (1, 4), (4, 5), (3, 5), (3, 5), (2, 5), (1, 5),
-     (4, 6), (4, 7), (4, 8), (3, 8), (3, 8), (2, 8), (3, 8), (3, 9), (2, 9), (3, 9), (1, 10), (3, 10), (2, 10), (1, 11),
-     (2, 11), (4, 11), (1, 12), (4, 12), (4, 13), (1, 13), (4, 13), (2, 13)]
 
+    controller.model.start()
     # controller.model.getCurrentPlayer().extend(tiles)
-    # controller.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 3), (1, 4), (1,5),(1,6)])
+    # controller.model.getCurrentPlayer().extend([(1,6)])
     # controller.model.getCurrentPlayer().extend([(1, 5), (1, 6), (1, 7), (1, 8), (1, 8), (2, 8), (3, 8), (4, 8), (1, 9), (1, 9), (2, 9), (3, 9), (4, 9), (1, 9), (2, 9), (3, 9), (4, 9), (1, 12), (2, 12), (3, 12), (4, 12)])
 
     if solve:
