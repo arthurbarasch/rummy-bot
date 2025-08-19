@@ -4,11 +4,11 @@ import time
 from threading import Timer
 
 GAME_MODE = {'HUMAN vs. AI': 0, 'AI vs. AI': 1}
-BOT_MOVE_DELAY = 0.7
+BOT_MOVE_DELAY = 0.5
 
 
 class RummyController:
-    def __init__(self, model: RummyModel,game_mode=GAME_MODE['HUMAN vs. AI']):
+    def __init__(self, model: RummyModel, game_mode=GAME_MODE['HUMAN vs. AI']):
         assert isinstance(model, RummyModel)
 
         self.gameMode = game_mode
@@ -36,14 +36,15 @@ class RummyController:
     def nextPlayer(self):
         self.model.nextPlayer()
         if (self.gameMode == GAME_MODE['AI vs. AI'] or
-           self.model.playerTurn == self.botPlayer) and not self.model.isGameOver():
+            self.model.playerTurn == self.botPlayer) and not self.model.isGameOver():
             Timer(1.5 * BOT_MOVE_DELAY, self.makeMoveBot).start()
 
     def isValidMove(self, old, new):
         oldScore = old.getBoardScore()
         newScore = new.getBoardScore()
-        return newScore != oldScore and newScore > 0 and (
-                newScore-oldScore >= 30 or not self.model.players[self.botPlayer].quarantine) and old.getBoardAsArray() != new.getBoardAsArray()
+        return newScore > oldScore and newScore > 0 and \
+            (newScore - oldScore >= 30 or not self.model.players[self.botPlayer].quarantine) and \
+            old.getBoardAsArray() != new.getBoardAsArray()
 
     def makeMoveBot(self):
         self.solver = RummySolver(self.model)
@@ -62,9 +63,14 @@ class RummyController:
 
 def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     model = RummyModel()
+    model.board["runs"].append([(1, 1), (1, 2), (1, 3)])
+    model.board["runs"].append([(1, 3), (1, 4), (1, 5)])
     controller = RummyController(model, game_mode=game_mode)
-    # controller.model.start()
-    controller.model.getCurrentPlayer().extend([(1, 1), (1, 2), (1, 3), (1, 3), (1, 4), (1,5)])
+
+    controller.model.start()
+    # controller.model.getCurrentPlayer().extend(tiles)
+    # controller.model.getCurrentPlayer().extend([(1,6)])
+    # controller.model.getCurrentPlayer().extend([(1, 5), (1, 6), (1, 7), (1, 8), (1, 8), (2, 8), (3, 8), (4, 8), (1, 9), (1, 9), (2, 9), (3, 9), (4, 9), (1, 9), (2, 9), (3, 9), (4, 9), (1, 12), (2, 12), (3, 12), (4, 12)])
 
     if solve:
         # Insert example game states here
