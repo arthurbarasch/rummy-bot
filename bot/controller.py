@@ -63,17 +63,15 @@ class RummyController:
 
 def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     model = RummyModel()
-    model.board["runs"].append([(1, 1), (1, 2), (1, 3)])
-    model.board["runs"].append([(1, 3), (1, 4), (1, 5)])
     controller = RummyController(model, game_mode=game_mode)
 
-    controller.model.start()
-    # controller.model.getCurrentPlayer().extend(tiles)
-    # controller.model.getCurrentPlayer().extend([(1,6)])
-    # controller.model.getCurrentPlayer().extend([(1, 5), (1, 6), (1, 7), (1, 8), (1, 8), (2, 8), (3, 8), (4, 8), (1, 9), (1, 9), (2, 9), (3, 9), (4, 9), (1, 9), (2, 9), (3, 9), (4, 9), (1, 12), (2, 12), (3, 12), (4, 12)])
+    # controller.model.start()
+
+    # Insert example game states here
+    controller.model.addRun([(2,1),(2,2),(2,3),(2,4)])
+    controller.model.getCurrentPlayer().extend([(4,4),(1,4),(3,1)])
 
     if solve:
-        # Insert example game states here
         print('Computing max score for current game state:')
         print(controller.model.getTotalTilePool())
         start = time.time()

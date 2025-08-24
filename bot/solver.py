@@ -34,10 +34,13 @@ class RummySolver:
     def setModel(self, model: RummyModel):
         self.__init__(model)
 
+    # Displays the recursion counter in the logs (output/debug.log)
     def displayCounter(self):
         for i, c in enumerate(self.counter):
             logging.debug(str(i+1) + '. ' + '*' * c)
 
+
+    # Export the score array as a heatmap (output/score.png)
     def exportScoreHeatmap(self):
         logging.debug('Exporting heatmap...')
 
@@ -70,18 +73,20 @@ class RummySolver:
         plt.savefig('output/score.png')
         logging.debug('Exported heatmap.')
 
+    # Export the recursion graph as a .dot file (output/graph.dot)
+    # note that the solution tracing is not perfect as explained in the research paper,
+    # so the graph is not 100% accurate with solution tracing
     def exportGraphTree(self):
         logging.debug('Exporting graph...')
-        # for i in range(n):
-        #     arr = [ str(i+1)+'.'+k for k in list(self.score[i])]
-        #     self.graph += '{rank=same; '+' '.join(arr)+'}\n'
-
         self.graph = 'digraph Rummy {\nrankdir="TB"\nnodesep=0.4;\nranksep=0.5;\n'+\
                      self.graph+\
                      '\n}'
         with open('output/graph.dot', 'w') as f:
             print(self.graph , file=f)
 
+
+    # Get a string representation of the intermediate solution at a specific (runs,value) combination,
+    # since some runs may be unfinished (1 or 2 tiles only)
     def getIntermediateSolution(self,runsHash,value):
         multisets = self.getRunsFromIndexes(runsHash)
         arr = []
@@ -124,9 +129,11 @@ class RummySolver:
 
         return dotStr
 
+    # Add a .dot string to the graph tree
     def addToGraphTree(self, dot):
         self.graph += dot
 
+    # Get a .dot representation of the transition from (runs,value) to (newRuns,value+1)
     def getDOTNode(self, value, oldRuns, newRuns):
         oldHash = self.getRunHash(oldRuns)
         newHash = self.getRunHash(newRuns)
@@ -180,21 +187,13 @@ class RummySolver:
             logging.debug(self.solution.getBoardAsArray())
             self.checkRuns(self.solution)
 
-
-
         if self.CONFIG['output_graph']:
             # self.exportScoreHeatmap()
             self.exportGraphTree()
 
 
-        # if score != self.solution.getBoardScore():
-        #     for tile in self.solution.getCurrentPlayer().tiles:
-        #         if self.solution.addToRun(tile):
-        #             self.solution.getCurrentPlayer().remove(tile)
-        #             logging.debug('ADDED A MISSING TILE')
 
         assert not self.track_solution or self.solution.isValid()
-        # assert score == self.solution.getBoardScore()
         return score
 
     def _maxScore(self, value=1, runs=[MS([0,0])]*k, quarantine=False):
@@ -205,11 +204,8 @@ class RummySolver:
         runHash = self.getRunHash(runs)
 
         # Base case: memoization stored in 'score' array
-
-        # logging.debug('length array {} and index {}'.format(len(self.score[value - 1]),runsIndex))
         mem_score = self.getScoreFromRuns(value, runs)
         if mem_score > -math.inf:
-            # logging.debug(f'Returning memorized score[{value},{self.getRunHash(runs)}]')
             return mem_score
 
 
@@ -230,18 +226,10 @@ class RummySolver:
             if self.track_solution and runHash not in self.solutions[value - 1]:
                 self.solutions[value - 1][runHash] = '0'*k
             return 0
-            # self.setScoreFromRuns(0,value,runs)
-            # runsHash = self.getRunHash(runs)
-            # self.solutions[value-1][runsHash] = runsHash
-            # return self.getScoreFromRuns(value, runs)
-
 
 
         for i in range(len(new_runs)):
             groupScores = self.totalGroupSize(new_hands[i]) * value
-
-            # Check the table constraint with the previous model
-            # if new_solution.checkTableConstraint(self.model, new_runs[i], filter_value=value):
 
             if self.CONFIG['output_graph']:
                 dotNode = self.getDOTNode(value, runs, new_runs[i])
@@ -257,12 +245,13 @@ class RummySolver:
                 self.setScoreFromRuns(result, value, runs)
                 if self.track_solution:
                     self.solutions[value-1][runHash] = self.getRunHash(new_runs[i])
-                # self.solutions[value - 1][str(hash(str(runs)))] = self.getIndexFromRuns(new_runs[i])
 
             assert groupScores >= 0
 
         return self.getScoreFromRuns(value, runs)
 
+    # Wrapper function to _makeRuns - Compute all possible runs from the given
+    # 'hand' and 'runs' configuration (considering only tiles of value 'value')
     def makeRuns(self, hand, runs, value):
         possible_runs = self._makeRuns(hand, runs, value)
 
@@ -271,7 +260,6 @@ class RummySolver:
         for next_runs in possible_runs:
             if len(next_runs) != k:
                 continue
-                # return [],[],[]
 
             run_score = 0
             new_hand = hand[:]
@@ -293,6 +281,9 @@ class RummySolver:
 
         return ret['new_runs'],ret['new_hands'],ret['run_scores']
 
+
+    # Recursive function to make all possible runs from the given 'hand' and 'runs' configuration
+    # Returns a list of all possible 'runs' configurations that can be made
     def _makeRuns(self, hand, runs, value, suit=1):
 
         if suit > k:
@@ -314,7 +305,6 @@ class RummySolver:
 
             for run in possible_runs:
                 d = collections.deque(run[:])
-                # d.appendleft(MS([0,0]))
                 final.append(list(d))
             return final
 
@@ -327,15 +317,9 @@ class RummySolver:
         for runs in possible_runs:
             for child in children:
                 assert len(list(child)) == m
-
-                # assert len(runs) == k-suit
                 d = collections.deque(runs[:])
                 d.appendleft(child)
-                # l = runs[:]
-                # l.append(child)
                 final.append(list(d))
-                # logging.debug(f'RUN {run} \nCHILD {child} \nFINAL {final}')
-
 
         return final
 
@@ -355,7 +339,6 @@ class RummySolver:
         if len(hand) < 3:
             return 0
 
-        # TODO: Generalize over 'm'
         g1 = list(set(hand))
         g2 = hand[:]
         for tile in g1:
@@ -377,12 +360,14 @@ class RummySolver:
 
         return score
 
+    # Set the score for a specific (value,suit,run) combination
     def setScoreFromRun(self,score,value,suit,run):
         for j in range(f_of_m):
             if run == RUN_CONFIGS[j]:
                 self.score[value-1][suit-1][j] = int(score)
                 break
 
+    # Set the score for a specific (value,runs) combination
     def setScoreFromRuns(self, score, value, runs):
         for i in range(k):
             run = runs[i]
@@ -393,6 +378,7 @@ class RummySolver:
                     self.score[value-1][i][j] = max(prevScore, int(score))
                     break
 
+    # Get the score for a specific (value,runs) combination     
     def getScoreFromRuns(self, value, runs):
         scores = np.zeros(k)
         for i in range(k):
@@ -405,13 +391,12 @@ class RummySolver:
         temp = scores[0]
         for s in scores:
             if s != temp:
-                # logging.debug(f'{value} {scores}')
-                # assert False
                 return -math.inf
-                # return 0
-
+            
         return temp
 
+
+    # Convert a list of RUN_CONFIG indexes to a 'runs' array
     @staticmethod
     def getRunsFromIndexes(indexes=np.zeros(k)):
         runs = []
@@ -422,6 +407,7 @@ class RummySolver:
         assert len(runs) == k
         return runs
 
+    # Convert a list of runs to a hash, comprised of the RUN_CONFIGS indexes for each suit appended together as a string
     @staticmethod
     def getRunHash(runs):
         h = ''
@@ -431,6 +417,7 @@ class RummySolver:
         assert len(h) == k
         return h
 
+    # Add the groups that can be formed from 'hand' to the given 'solution'
     def addGroupsToSolution(self,hand, solution):
         g1 = list(set(hand))
         g2 = hand[:]
@@ -445,7 +432,8 @@ class RummySolver:
                     g2.append(t)
                     break
 
-
+      
+        # Add groups to solution if they have length >= 3
         if len(g1) >= 3:
             solution.addGroup(g1)
         if len(g2) >= 3:
@@ -454,6 +442,7 @@ class RummySolver:
         return solution
 
 
+    # Trace the solution from the 'solutions' array
     def traceSolution(self):
         solution = RummyModel()
         prevRuns = [MS([0,0]),MS([0,0]),MS([0,0]),MS([0,0])]
@@ -502,11 +491,3 @@ class RummySolver:
         final = RummyModel(self.model)
         final.copySolution(solution)
         return final
-
-
-
-    def getMultisetFromHash(self, hash):
-        multisets = []
-        for i in range(k):
-            multisets.append(RUN_CONFIGS[int(hash[i])])
-        return multisets

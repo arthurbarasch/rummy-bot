@@ -73,8 +73,6 @@ class RummyModel:
         for i in range(m - 1):
             self.drawPile.extend(temp)
 
-        # self.drawPile.extend([(0,0)] * j) # (0,0) is used to signify a joker
-
     def copySolution(self, model):
         previous = RummyModel(self)
         self.board = model.board
@@ -230,6 +228,14 @@ class RummyModel:
             score += tile[1]
         return score
 
+
+    # Helper function for creating runs
+    def createRun(self,suit,values):
+        return self.addRun([(suit,value) for value in values])
+
+    # Adds a group to the board if it is valid
+    # useDrawPile - if True, removes tiles used from draw pile
+    # usePlayerStand - if True, removes tiles used from current player's stand
     def addGroup(self, group, useDrawPile=False, usePlayerStand=False):
         if len(group) < 3:
             return False
@@ -257,6 +263,8 @@ class RummyModel:
         self.board['groups'].append(group)
         return True
 
+
+    # Adds a run
     def addRun(self, run, useDrawPile=False):
         if len(run) < 3:
             return False
@@ -320,20 +328,6 @@ class RummyModel:
         print(msg)
         return False
 
-        #
-        # for run in self.board['runs']:
-        #     if run[-1][1] + 1 == tiles[0][1] and run[-1][0] == tiles[0][0]:
-        #         for tile in tiles:
-        #             if run[-1][1] + 1 == tile[1] and run[-1][0] == tile[0]:
-        #                 run.append(tile)
-        #                 tilesToAdd -= 1
-        #             else:
-        #                 logging.error('Cannot insert tile {} in {}'.format(tile, self.board['runs']))
-        #                 assert False
-        #
-        # if tilesToAdd != 0:
-        #     logging.warning('RummyModel.addToRuns: Cannot insert tiles on runs. Tiles left -> {}'.format(tilesToAdd))
-        # return tilesToAdd == 0
 
     def isValid(self):
         count = np.zeros((k,n))

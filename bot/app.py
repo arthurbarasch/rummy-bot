@@ -1,15 +1,6 @@
-#https://towardsdatascience.com/video-streaming-in-web-browsers-with-opencv-flask-93a38846fe00
-
 #Import necessary libraries
-from flask import Flask, render_template, Response, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from threading import Timer
-# import cv2
-import random
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from scipy.io import loadmat
-import pytesseract as tess
 from bot.controller import runRummyGame
 from bot.solver import RummySolver
 from bot.model import RummyModel
@@ -18,37 +9,11 @@ import logging
 #Initialize the Flask app
 app = Flask(__name__)
 
-#The program will detect text every 40 frames
-FRAME_INTERVAL = 40
-
 #Rummy model
 controller = None
 rummyBotSolutions = []
 currSolutionIndex = -1
 
-
-# class RummyApp:
-#     def __init__(self):
-#
-
-
-    # def genFrames(self):
-    #     while True:
-    #         self.frameNr += 1
-    #         success, self.img = camera.read()  # read the camera frame
-    #         if not success:
-    #             break
-    #         else:
-    #             img = self.detectEdges(self.img)
-    #             #img = self.detectDigits(frame)
-    #
-    #             # Crop selected roi from raw image
-    #             if self.roi!=0:
-    #                 img = img[int(self.roi[1]):int(self.roi[1] + self.roi[3]), int(self.roi[0]):int(self.roi[0] + self.roi[2])]
-    #             frame = img.tobytes()
-    #             yield (b'--frame\r\n'
-    #                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')  # concat frame one by one and show result
-    #
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -161,14 +126,6 @@ def jsonifyModel():
     )
 
 def jsonifySolution(score,solution,scoreArray):
-    arr = []
-
-    # print('&& SCORE = '+score)
-    # for valArray in scoreArray:
-    #     arr.append([])
-    #     for score in valArray:
-    #         arr[-1].append((score if score >= 0 else -999, [])) # TODO
-
     return jsonify(
         score=score if score > 0 else -999,
         board=solution.getBoardAsArray(),

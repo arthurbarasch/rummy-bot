@@ -57,8 +57,8 @@ function draw() {
   fill(0)
 
   text('Player '+(selectedPlayer+1),width-50, height-PLAYER_ROWS*sizeY-10)
-  text('Max score: '+currMaxScore,80, height-PLAYER_ROWS*sizeY-10)
-  text('Score on the board: '+boardScore,125, height-PLAYER_ROWS*sizeY-50)
+  // text('Max score: '+currMaxScore,80, height-PLAYER_ROWS*sizeY-10)
+  // text('Score on the board: '+boardScore,125, height-PLAYER_ROWS*sizeY-50)
   pop();
 
   // Display tiles
