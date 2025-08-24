@@ -1,4 +1,3 @@
-import copy
 import random
 import numpy as np
 import json
@@ -8,7 +7,6 @@ from flask import jsonify
 from functools import reduce
 
 # Variables
-
 NUM_STARTING_TILES = 14
 NUM_PLAYERS = 2
 m = 2  # Number of copies of the full tile set (without jokers)
@@ -17,13 +15,15 @@ j = 0  # Number of jokers
 n = 13  # Number of different numbered values of tiles
 k = 4  # Number of different suits
 s = 3  # Minimal set size
-COLORS = ['black','blue', 'yellow', 'red']
 
-# Sets
+# Sets/Lists
 K = list(range(1, k+1))  # Set of suits
 N = list(range(1, n+1))  # Set of numbered values
+COLORS = ['black','blue', 'yellow', 'red']
 
 
+# A model which represents the current state of the whole game, including the board,
+# players, draw pile and current player turn
 class RummyModel:
     def __init__(self,model=None):
         assert model is None or isinstance(model,RummyModel)

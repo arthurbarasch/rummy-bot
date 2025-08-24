@@ -68,8 +68,8 @@ def runRummyGame(solve=True, game_mode=GAME_MODE['HUMAN vs. AI']):
     # controller.model.start()
 
     # Insert example game states here
-    controller.model.addRun([(2,1),(2,2),(2,3),(2,4)])
-    controller.model.getCurrentPlayer().extend([(4,4),(1,4),(3,1)])
+    controller.model.addRun([(2, 1), (2, 2), (2, 3), (2, 4)])
+    controller.model.getCurrentPlayer().extend([(4, 4), (1, 4), (3, 1)])
 
     if solve:
         print('Computing max score for current game state:')

@@ -1,11 +1,10 @@
 from functools import reduce
 
-from bot.model import m, n, k, s, RummyModel, f_of_m, K
+from bot.model import m, n, k, RummyModel, f_of_m, K
 import math
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
-import multiset
 import collections
 from util import MS, getChildren
 
